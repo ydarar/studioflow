@@ -20,6 +20,7 @@ For release validation, use `docs/testing-manual-smoke.md`.
 ## Step 1: verify host and Screen Studio access
 
 ```bash
+pnpm setup
 pnpm run doctor
 pnpm screenstudio-prep
 ```
@@ -88,11 +89,11 @@ pnpm promote -- --candidate <candidate-id> --flow-id <new-flow-id>
 ```
 
 Expected outputs:
-- Promoted flow in `packages/flow-registry/flows/<flow-id>.yaml`.
-- Promotion record in `packages/flow-registry/learned/promotions/`.
+- Promoted flow in `~/.studioflow/flows/<flow-id>.yaml` (or `$STUDIOFLOW_DATA_DIR/flows`).
+- Promotion record in `~/.studioflow/learned/promotions/` (or `$STUDIOFLOW_DATA_DIR/learned/promotions`).
 
 ## Common blockers
 
 - Permission failures: rerun `pnpm run doctor` and approve macOS prompts.
-- Health timeout: confirm `DEMOPILOT_BASE_URL`, `DEMOPILOT_START_COMMAND`, and `DEMOPILOT_HEALTH_PATH`.
+- Health timeout: confirm `STUDIOFLOW_BASE_URL`, `STUDIOFLOW_START_COMMAND`, and `STUDIOFLOW_HEALTH_PATH`.
 - Flow validation failures: rerun `pnpm validate -- --flow <path>` and fix missing required fields.

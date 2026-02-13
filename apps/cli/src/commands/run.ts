@@ -1,11 +1,12 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import kleur from "kleur";
-import { bootstrapReportSchema } from "@demopilot/contracts";
-import { loadFlows, getFlowById, loadFlowFromFile } from "@demopilot/flow-registry";
-import { routeIntent } from "@demopilot/planner";
-import { runEngine } from "@demopilot/orchestrator";
-import { ensureAutomationPermissions } from "@demopilot/adapters-desktop";
+import { bootstrapReportSchema } from "@studioflow/contracts";
+import { ensureChromiumInstalled } from "@studioflow/adapters-playwright";
+import { loadFlows, getFlowById, loadFlowFromFile } from "@studioflow/flow-registry";
+import { routeIntent } from "@studioflow/planner";
+import { runEngine } from "@studioflow/orchestrator";
+import { ensureAutomationPermissions } from "@studioflow/adapters-desktop";
 import { validateFlowDefinition } from "./flow-validation.js";
 import { resolveFromWorkspace, workspaceRoot } from "./path-utils.js";
 
@@ -28,7 +29,7 @@ async function waitForHealth(healthUrl: string, timeoutMs = 45_000) {
 }
 
 async function loadBootstrapHints() {
-  const configured = process.env.DEMOPILOT_BOOTSTRAP_REPORT ?? "artifacts/bootstrap.json";
+  const configured = process.env.STUDIOFLOW_BOOTSTRAP_REPORT ?? "artifacts/bootstrap.json";
   const resolved = resolveFromWorkspace(configured);
 
   try {
@@ -75,6 +76,14 @@ function formatDuration(start: number) {
 }
 
 async function runWithFlows(intentLabel: string, flowIds: string[], flows: Awaited<ReturnType<typeof loadFlowFromFile>>[]) {
+  const chromium = await ensureChromiumInstalled({ autoInstall: true });
+  if (!chromium.installed) {
+    throw new Error("Playwright Chromium is not installed. Run `studioflow setup` and retry.");
+  }
+  if (chromium.installedNow) {
+    console.log(kleur.green("Installed Playwright Chromium runtime."));
+  }
+
   await ensureAutomationPermissions();
 
   for (const flow of flows) {
@@ -84,13 +93,13 @@ async function runWithFlows(intentLabel: string, flowIds: string[], flows: Await
     }
   }
 
-  const baseUrl = process.env.DEMOPILOT_BASE_URL ?? "http://localhost:4173";
+  const baseUrl = process.env.STUDIOFLOW_BASE_URL ?? "http://localhost:4173";
   const bootstrap = await loadBootstrapHints();
-  const startCommand = process.env.DEMOPILOT_START_COMMAND ?? bootstrap?.startCommand ?? "pnpm --filter @demopilot/sample-app dev";
-  const healthPath = process.env.DEMOPILOT_HEALTH_PATH ?? bootstrap?.healthPath ?? "/api/health";
+  const startCommand = process.env.STUDIOFLOW_START_COMMAND ?? bootstrap?.startCommand ?? "pnpm --filter @studioflow/sample-app dev";
+  const healthPath = process.env.STUDIOFLOW_HEALTH_PATH ?? bootstrap?.healthPath ?? "/api/health";
   const started = Date.now();
 
-  console.log(kleur.bold("DemoPilot Run"));
+  console.log(kleur.bold("StudioFlow Run"));
   console.log(`Intent: ${intentLabel}`);
   console.log(`Mapped flows: ${flowIds.join(", ")}`);
   console.log(`Start command: ${startCommand}`);
@@ -138,7 +147,7 @@ export async function runIntentCommand(intent: string) {
 
 export async function runFlowFileCommand(flowPath: string, sourceIntent = "artifact flow") {
   if (!flowPath) {
-    throw new Error("Usage: demopilot run --flow <path/to/flow.json|yaml>");
+    throw new Error("Usage: studioflow run --flow <path/to/flow.json|yaml>");
   }
 
   const resolvedPath = resolveFromWorkspace(flowPath);

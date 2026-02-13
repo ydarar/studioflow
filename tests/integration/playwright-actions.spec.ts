@@ -2,27 +2,27 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { executeStep, startBrowser } from "@demopilot/adapters-playwright";
-import type { FlowStep } from "@demopilot/contracts";
+import { executeStep, startBrowser } from "@studioflow/adapters-playwright";
+import type { FlowStep } from "@studioflow/contracts";
 
 describe.sequential("playwright action execution", () => {
   let browser: Awaited<ReturnType<typeof startBrowser>>["browser"];
   let page: Awaited<ReturnType<typeof startBrowser>>["page"];
   let runDir = "";
-  const originalHeadless = process.env.DEMOPILOT_HEADLESS;
+  const originalHeadless = process.env.STUDIOFLOW_HEADLESS;
 
   beforeEach(async () => {
-    process.env.DEMOPILOT_HEADLESS = "true";
+    process.env.STUDIOFLOW_HEADLESS = "true";
     const session = await startBrowser("http://localhost:4173");
     browser = session.browser;
     page = session.page;
-    runDir = await fs.mkdtemp(path.join(os.tmpdir(), "demopilot-actions-"));
+    runDir = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-actions-"));
     await fs.mkdir(path.join(runDir, "screenshots"), { recursive: true });
   });
 
   afterEach(async () => {
     await browser.close();
-    process.env.DEMOPILOT_HEADLESS = originalHeadless;
+    process.env.STUDIOFLOW_HEADLESS = originalHeadless;
     await fs.rm(runDir, { recursive: true, force: true });
   });
 
@@ -52,13 +52,13 @@ describe.sequential("playwright action execution", () => {
         id: "type-name",
         action: "type",
         target: '[data-testid="name-input"]',
-        value: "DemoPilot"
+        value: "StudioFlow"
       },
       runDir,
       baseUrl
     );
 
-    expect(await page.locator('[data-testid="name-input"]').inputValue()).toBe("DemoPilot");
+    expect(await page.locator('[data-testid="name-input"]').inputValue()).toBe("StudioFlow");
 
     await executeStep(
       page,
@@ -98,7 +98,7 @@ describe.sequential("playwright action execution", () => {
       {
         id: "assert-result-text",
         action: "assert_text",
-        value: "Hello DemoPilot"
+        value: "Hello StudioFlow"
       },
       runDir,
       baseUrl
@@ -120,7 +120,7 @@ describe.sequential("playwright action execution", () => {
   });
 
   it("executes goto with an absolute URL", async () => {
-    const dataUrl = "data:text/html,<html><body><h1>DemoPilot</h1></body></html>";
+    const dataUrl = "data:text/html,<html><body><h1>StudioFlow</h1></body></html>";
     await executeStep(
       page,
       {
@@ -132,7 +132,7 @@ describe.sequential("playwright action execution", () => {
       "http://localhost:4173"
     );
 
-    await expect(page.locator("h1").textContent()).resolves.toBe("DemoPilot");
+    await expect(page.locator("h1").textContent()).resolves.toBe("StudioFlow");
   });
 
   it("throws clear errors for invalid step payloads and unsupported actions", async () => {

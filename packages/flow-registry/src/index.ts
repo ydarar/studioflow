@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
@@ -9,14 +10,43 @@ import {
   type FlowDefinition,
   type LearningCandidate,
   type PromotionRecord
-} from "@demopilot/contracts";
+} from "@studioflow/contracts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
-const flowsDir = path.join(rootDir, "flows");
-const candidatesDir = path.join(rootDir, "learned", "candidates");
-const promotionsDir = path.join(rootDir, "learned", "promotions");
+const builtInFlowsDir = path.join(rootDir, "flows");
+
+function dataRoot() {
+  const configured = process.env.STUDIOFLOW_DATA_DIR ?? process.env.STUDIOFLOW_HOME;
+  if (configured && configured.trim()) {
+    return path.resolve(configured);
+  }
+  return path.join(os.homedir(), ".studioflow");
+}
+
+function userFlowsDir() {
+  return path.join(dataRoot(), "flows");
+}
+
+function candidatesDir() {
+  return path.join(dataRoot(), "learned", "candidates");
+}
+
+function promotionsDir() {
+  return path.join(dataRoot(), "learned", "promotions");
+}
+
+async function listFlowFiles(dir: string) {
+  try {
+    const files = await fs.readdir(dir);
+    return files.filter((f) => [".yaml", ".yml", ".json"].includes(path.extname(f).toLowerCase()));
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT") return [];
+    throw error;
+  }
+}
 
 function parseFlow(raw: string, ext: string): FlowDefinition {
   const parsed = ext === ".json" ? JSON.parse(raw) : YAML.parse(raw);
@@ -33,16 +63,19 @@ export async function loadFlowFromFile(filePath: string): Promise<FlowDefinition
 }
 
 export async function loadFlows(): Promise<FlowDefinition[]> {
-  const files = (await fs.readdir(flowsDir)).filter((f) => [".yaml", ".yml", ".json"].includes(path.extname(f)));
-  const flows: FlowDefinition[] = [];
+  const merged = new Map<string, FlowDefinition>();
+  const dirs = [builtInFlowsDir, userFlowsDir()];
 
-  for (const file of files) {
-    const fullPath = path.join(flowsDir, file);
-    const flow = await loadFlowFromFile(fullPath);
-    flows.push(flow);
+  for (const dir of dirs) {
+    const files = await listFlowFiles(dir);
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const flow = await loadFlowFromFile(fullPath);
+      merged.set(flow.id, flow);
+    }
   }
 
-  return flows.sort((a, b) => a.id.localeCompare(b.id));
+  return Array.from(merged.values()).sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export async function getFlowById(id: string): Promise<FlowDefinition> {
@@ -56,9 +89,10 @@ export async function getFlowById(id: string): Promise<FlowDefinition> {
 
 export async function writeCandidate(name: string, payload: unknown) {
   const parsed = learningCandidateSchema.parse(payload);
-  await fs.mkdir(candidatesDir, { recursive: true });
+  const outputDir = candidatesDir();
+  await fs.mkdir(outputDir, { recursive: true });
   const filename = `${Date.now()}-${name}.json`;
-  const filePath = path.join(candidatesDir, filename);
+  const filePath = path.join(outputDir, filename);
   await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf8");
   return filePath;
 }
@@ -69,13 +103,14 @@ export async function loadCandidateFromFile(filePath: string): Promise<LearningC
 }
 
 export async function loadCandidates(): Promise<Array<{ file: string; candidate: LearningCandidate }>> {
-  await fs.mkdir(candidatesDir, { recursive: true });
-  const files = await fs.readdir(candidatesDir);
+  const outputDir = candidatesDir();
+  await fs.mkdir(outputDir, { recursive: true });
+  const files = await fs.readdir(outputDir);
   const loaded: Array<{ file: string; candidate: LearningCandidate }> = [];
 
   for (const file of files) {
     if (!file.endsWith(".json")) continue;
-    const fullPath = path.join(candidatesDir, file);
+    const fullPath = path.join(outputDir, file);
     const candidate = await loadCandidateFromFile(fullPath);
     loaded.push({ file: fullPath, candidate });
   }
@@ -94,16 +129,18 @@ export async function getCandidateById(candidateId: string): Promise<{ file: str
 
 export async function writePromotedFlow(flow: FlowDefinition) {
   const validated = flowDefinitionSchema.parse(flow);
-  await fs.mkdir(flowsDir, { recursive: true });
-  const filePath = path.join(flowsDir, `${validated.id}.yaml`);
+  const outputDir = userFlowsDir();
+  await fs.mkdir(outputDir, { recursive: true });
+  const filePath = path.join(outputDir, `${validated.id}.yaml`);
   await fs.writeFile(filePath, YAML.stringify(validated), "utf8");
   return filePath;
 }
 
 export async function writePromotionRecord(record: PromotionRecord) {
   const validated = promotionRecordSchema.parse(record);
-  await fs.mkdir(promotionsDir, { recursive: true });
-  const filePath = path.join(promotionsDir, `${Date.now()}-${validated.candidateId}.json`);
+  const outputDir = promotionsDir();
+  await fs.mkdir(outputDir, { recursive: true });
+  const filePath = path.join(outputDir, `${Date.now()}-${validated.candidateId}.json`);
   await fs.writeFile(filePath, JSON.stringify(validated, null, 2), "utf8");
   return filePath;
 }

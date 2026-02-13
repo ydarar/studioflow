@@ -1,5 +1,5 @@
 import type { Page } from "playwright";
-import type { FlowStep } from "@demopilot/contracts";
+import type { FlowStep } from "@studioflow/contracts";
 import { assertText, assertVisible } from "./assertions.js";
 
 function wait(ms: number) {
@@ -22,13 +22,13 @@ function intEnv(name: string, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-const renderCursorOverlay = boolEnv("DEMOPILOT_RENDER_CURSOR", true);
-const defaultCursorMoveMs = intEnv("DEMOPILOT_CURSOR_MOVE_MS", 320);
-const defaultCursorHighlightMs = intEnv("DEMOPILOT_CURSOR_HIGHLIGHT_MS", 120);
-const realisticTyping = boolEnv("DEMOPILOT_REALISTIC_TYPING", true);
-const typingDelayMs = Math.max(0, intEnv("DEMOPILOT_TYPING_DELAY_MS", 35));
-const pacingAdjustmentEnabled = boolEnv("DEMOPILOT_PACING_ADJUSTMENT", true);
-const pacingJitterEnabled = boolEnv("DEMOPILOT_PACING_JITTER", true);
+const renderCursorOverlay = boolEnv("STUDIOFLOW_RENDER_CURSOR", true);
+const defaultCursorMoveMs = intEnv("STUDIOFLOW_CURSOR_MOVE_MS", 320);
+const defaultCursorHighlightMs = intEnv("STUDIOFLOW_CURSOR_HIGHLIGHT_MS", 120);
+const realisticTyping = boolEnv("STUDIOFLOW_REALISTIC_TYPING", true);
+const typingDelayMs = Math.max(0, intEnv("STUDIOFLOW_TYPING_DELAY_MS", 35));
+const pacingAdjustmentEnabled = boolEnv("STUDIOFLOW_PACING_ADJUSTMENT", true);
+const pacingJitterEnabled = boolEnv("STUDIOFLOW_PACING_JITTER", true);
 const maxDelayMs = 60_000;
 
 export interface StepExecutionContext {
@@ -45,13 +45,13 @@ interface Point {
 const cursorOverlaySetupScript = `
 (() => {
   const win = window;
-  if (win.__demopilotCursor) return;
+  if (win.__studioflowCursor) return;
 
-  if (!document.getElementById("demopilot-cursor-style")) {
+  if (!document.getElementById("studioflow-cursor-style")) {
     const style = document.createElement("style");
-    style.id = "demopilot-cursor-style";
+    style.id = "studioflow-cursor-style";
     style.textContent = \`
-      #demopilot-cursor {
+      #studioflow-cursor {
         position: fixed;
         top: 0;
         left: 0;
@@ -67,7 +67,7 @@ const cursorOverlaySetupScript = `
         transition-property: transform;
         transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
       }
-      #demopilot-cursor::after {
+      #studioflow-cursor::after {
         content: "";
         position: absolute;
         inset: -8px;
@@ -76,10 +76,10 @@ const cursorOverlaySetupScript = `
         opacity: 0;
         transform: scale(0.65);
       }
-      #demopilot-cursor.demopilot-cursor-pulse::after {
-        animation: demopilot-cursor-pulse 300ms ease-out;
+      #studioflow-cursor.studioflow-cursor-pulse::after {
+        animation: studioflow-cursor-pulse 300ms ease-out;
       }
-      @keyframes demopilot-cursor-pulse {
+      @keyframes studioflow-cursor-pulse {
         0% { opacity: 0.9; transform: scale(0.55); }
         100% { opacity: 0; transform: scale(1.5); }
       }
@@ -88,7 +88,7 @@ const cursorOverlaySetupScript = `
   }
 
   const cursor = document.createElement("div");
-  cursor.id = "demopilot-cursor";
+  cursor.id = "studioflow-cursor";
   cursor.setAttribute("aria-hidden", "true");
   document.body.appendChild(cursor);
 
@@ -101,14 +101,14 @@ const cursorOverlaySetupScript = `
     cursor.style.transform = \`translate3d(\${x - 8}px, \${y - 8}px, 0)\`;
   };
 
-  win.__demopilotCursor = {
+  win.__studioflowCursor = {
     moveTo(nextX, nextY, durationMs) {
       setPosition(nextX, nextY, durationMs);
     },
     clickPulse() {
-      cursor.classList.remove("demopilot-cursor-pulse");
+      cursor.classList.remove("studioflow-cursor-pulse");
       void cursor.offsetWidth;
-      cursor.classList.add("demopilot-cursor-pulse");
+      cursor.classList.add("studioflow-cursor-pulse");
     }
   };
 })();
@@ -116,21 +116,21 @@ const cursorOverlaySetupScript = `
 
 const cursorMoveScript = (point: Point, durationMs: number) => `
 (() => {
-  const cursor = window.__demopilotCursor;
+  const cursor = window.__studioflowCursor;
   if (cursor) cursor.moveTo(${point.x}, ${point.y}, ${durationMs});
 })();
 `;
 
 const cursorClickPulseScript = `
 (() => {
-  const cursor = window.__demopilotCursor;
+  const cursor = window.__studioflowCursor;
   if (cursor) cursor.clickPulse();
 })();
 `;
 
 declare global {
   interface Window {
-    __demopilotCursor?: {
+    __studioflowCursor?: {
       moveTo: (x: number, y: number, durationMs: number) => void;
       clickPulse: () => void;
     };

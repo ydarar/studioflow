@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { FlowDefinition } from "@demopilot/contracts";
+import type { FlowDefinition } from "@studioflow/contracts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "../..");
@@ -24,21 +24,21 @@ const {
   ensureAutomationPermissionsMock: vi.fn()
 }));
 
-vi.mock("@demopilot/flow-registry", () => ({
+vi.mock("@studioflow/flow-registry", () => ({
   loadFlows: loadFlowsMock,
   getFlowById: getFlowByIdMock,
   loadFlowFromFile: loadFlowFromFileMock
 }));
 
-vi.mock("@demopilot/planner", () => ({
+vi.mock("@studioflow/planner", () => ({
   routeIntent: routeIntentMock
 }));
 
-vi.mock("@demopilot/orchestrator", () => ({
+vi.mock("@studioflow/orchestrator", () => ({
   runEngine: runEngineMock
 }));
 
-vi.mock("@demopilot/adapters-desktop", () => ({
+vi.mock("@studioflow/adapters-desktop", () => ({
   ensureAutomationPermissions: ensureAutomationPermissionsMock
 }));
 
@@ -71,10 +71,10 @@ describe.sequential("run command orchestration", () => {
 
     process.env = { ...originalEnv };
     process.env.INIT_CWD = rootDir;
-    process.env.DEMOPILOT_BASE_URL = "http://localhost:4173";
-    delete process.env.DEMOPILOT_START_COMMAND;
-    delete process.env.DEMOPILOT_HEALTH_PATH;
-    delete process.env.DEMOPILOT_BOOTSTRAP_REPORT;
+    process.env.STUDIOFLOW_BASE_URL = "http://localhost:4173";
+    delete process.env.STUDIOFLOW_START_COMMAND;
+    delete process.env.STUDIOFLOW_HEALTH_PATH;
+    delete process.env.STUDIOFLOW_BOOTSTRAP_REPORT;
 
     ensureAutomationPermissionsMock.mockResolvedValue({
       screenStudioInstalled: true,
@@ -106,8 +106,8 @@ describe.sequential("run command orchestration", () => {
     process.env = { ...originalEnv };
   });
 
-  it("prefers DEMOPILOT_* env overrides over bootstrap hints", async () => {
-    const bootstrapDir = await fs.mkdtemp(path.join(os.tmpdir(), "demopilot-bootstrap-"));
+  it("prefers STUDIOFLOW_* env overrides over bootstrap hints", async () => {
+    const bootstrapDir = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-bootstrap-"));
     const bootstrapPath = path.join(bootstrapDir, "bootstrap.json");
     await fs.writeFile(
       bootstrapPath,
@@ -127,9 +127,9 @@ describe.sequential("run command orchestration", () => {
       "utf8"
     );
 
-    process.env.DEMOPILOT_BOOTSTRAP_REPORT = bootstrapPath;
-    process.env.DEMOPILOT_START_COMMAND = "pnpm env-start";
-    process.env.DEMOPILOT_HEALTH_PATH = "/env-health";
+    process.env.STUDIOFLOW_BOOTSTRAP_REPORT = bootstrapPath;
+    process.env.STUDIOFLOW_START_COMMAND = "pnpm env-start";
+    process.env.STUDIOFLOW_HEALTH_PATH = "/env-health";
 
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const { runIntentCommand } = await import("../../apps/cli/src/commands/run.ts");
@@ -143,7 +143,7 @@ describe.sequential("run command orchestration", () => {
   });
 
   it("uses bootstrap hints when env overrides are absent", async () => {
-    const bootstrapDir = await fs.mkdtemp(path.join(os.tmpdir(), "demopilot-bootstrap-"));
+    const bootstrapDir = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-bootstrap-"));
     const bootstrapPath = path.join(bootstrapDir, "bootstrap.json");
     await fs.writeFile(
       bootstrapPath,
@@ -163,9 +163,9 @@ describe.sequential("run command orchestration", () => {
       "utf8"
     );
 
-    process.env.DEMOPILOT_BOOTSTRAP_REPORT = bootstrapPath;
-    delete process.env.DEMOPILOT_START_COMMAND;
-    delete process.env.DEMOPILOT_HEALTH_PATH;
+    process.env.STUDIOFLOW_BOOTSTRAP_REPORT = bootstrapPath;
+    delete process.env.STUDIOFLOW_START_COMMAND;
+    delete process.env.STUDIOFLOW_HEALTH_PATH;
 
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const { runIntentCommand } = await import("../../apps/cli/src/commands/run.ts");
@@ -178,9 +178,9 @@ describe.sequential("run command orchestration", () => {
   });
 
   it("falls back to default start command and health path when no hints exist", async () => {
-    process.env.DEMOPILOT_BOOTSTRAP_REPORT = path.join(rootDir, "does-not-exist-bootstrap.json");
-    delete process.env.DEMOPILOT_START_COMMAND;
-    delete process.env.DEMOPILOT_HEALTH_PATH;
+    process.env.STUDIOFLOW_BOOTSTRAP_REPORT = path.join(rootDir, "does-not-exist-bootstrap.json");
+    delete process.env.STUDIOFLOW_START_COMMAND;
+    delete process.env.STUDIOFLOW_HEALTH_PATH;
 
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const { runIntentCommand } = await import("../../apps/cli/src/commands/run.ts");
@@ -188,7 +188,7 @@ describe.sequential("run command orchestration", () => {
     await runIntentCommand("walk me through billing");
 
     const logged = logSpy.mock.calls.flat().map(String).join("\n");
-    expect(logged).toContain("Start command: pnpm --filter @demopilot/sample-app dev");
+    expect(logged).toContain("Start command: pnpm --filter @studioflow/sample-app dev");
     expect(logged).toContain("Health path: /api/health");
   });
 

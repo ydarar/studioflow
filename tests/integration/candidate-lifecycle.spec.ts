@@ -3,14 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { LearningCandidate } from "@demopilot/contracts";
+import type { LearningCandidate } from "@studioflow/contracts";
 import { promoteCommand } from "../../apps/cli/src/commands/promote.js";
 import { replayCommand } from "../../apps/cli/src/commands/replay.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "../..");
-const flowsDir = path.resolve(rootDir, "packages/flow-registry/flows");
-const promotionsDir = path.resolve(rootDir, "packages/flow-registry/learned/promotions");
 
 function makeCandidate(overrides: Partial<LearningCandidate> = {}): LearningCandidate {
   return {
@@ -45,13 +43,15 @@ async function readCandidate(filePath: string) {
 
 describe.sequential("candidate lifecycle", () => {
   let tempRoot = "";
+  let dataDir = "";
   let createdFlowPath: string | null = null;
   let createdPromotionPaths: string[] = [];
   const originalEnv = { ...process.env };
 
   beforeEach(async () => {
-    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "demopilot-candidates-"));
-    process.env = { ...originalEnv, INIT_CWD: rootDir };
+    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-candidates-"));
+    dataDir = path.join(tempRoot, "studioflow-data");
+    process.env = { ...originalEnv, INIT_CWD: rootDir, STUDIOFLOW_DATA_DIR: dataDir };
     createdFlowPath = null;
     createdPromotionPaths = [];
   });
@@ -104,6 +104,8 @@ describe.sequential("candidate lifecycle", () => {
   });
 
   it("promote writes promoted flow and promotion record and persists validated candidate state", async () => {
+    const flowsDir = path.join(dataDir, "flows");
+    const promotionsDir = path.join(dataDir, "learned", "promotions");
     await fs.mkdir(promotionsDir, { recursive: true });
     const beforePromotionFiles = new Set(await fs.readdir(promotionsDir));
 

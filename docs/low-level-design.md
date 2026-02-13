@@ -10,7 +10,7 @@ Source: `apps/cli/src/index.ts`
 - Supports `demo` alias for `run`.
 - Special handling for `--flow` and `--intent` in run command.
 - Validates numeric flags for `replay` and `promote`.
-- Normalizes errors into `DemoPilot error: <message>` and exits `1`.
+- Normalizes errors into `StudioFlow error: <message>` and exits `1`.
 
 ## Path resolution and workspace root
 
@@ -27,7 +27,7 @@ Source: `apps/cli/src/commands/bootstrap.ts`
 - Recursively scans source tree excluding generated and dependency directories.
 - Detects project type (`nextjs`, `vite-react`, `unknown`) from dependencies and route files.
 - Chooses startup command by precedence:
-  - `DEMOPILOT_START_COMMAND`
+  - `STUDIOFLOW_START_COMMAND`
   - `scripts["dev:sample"]`
   - `scripts.dev`
   - `scripts.start`
@@ -104,8 +104,8 @@ Source: `packages/flow-registry/src/index.ts`
 - Candidate writes:
   - filename format: `<timestamp>-<name>.json`
 - Promotion writes:
-  - deterministic flow: `flows/<id>.yaml`
-  - promotion record: `learned/promotions/<timestamp>-<candidate-id>.json`
+  - deterministic flow: `~/.studioflow/flows/<id>.yaml` (or `$STUDIOFLOW_DATA_DIR/flows`)
+  - promotion record: `~/.studioflow/learned/promotions/<timestamp>-<candidate-id>.json` (or `$STUDIOFLOW_DATA_DIR/learned/promotions`)
 
 ## Engine internals
 

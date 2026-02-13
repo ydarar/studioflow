@@ -1,5 +1,5 @@
 import kleur from "kleur";
-import { writePromotedFlow, writePromotionRecord } from "@demopilot/flow-registry";
+import { writePromotedFlow, writePromotionRecord } from "@studioflow/flow-registry";
 import { resolveCandidateReference, persistCandidate } from "./candidate-utils.js";
 
 function sanitizeFlowId(value: string) {

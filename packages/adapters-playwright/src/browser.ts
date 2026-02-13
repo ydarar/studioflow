@@ -57,7 +57,7 @@ export async function ensureChromiumInstalled(opts: { autoInstall?: boolean } = 
 }
 
 export async function startBrowser(baseUrl: string): Promise<BrowserSession> {
-  const headless = (process.env.DEMOPILOT_HEADLESS ?? "false") === "true";
+  const headless = (process.env.STUDIOFLOW_HEADLESS ?? "false") === "true";
   const browser = await chromium.launch({ headless });
   const context = await browser.newContext({ baseURL: baseUrl, viewport: { width: 1440, height: 960 } });
   const page = await context.newPage();

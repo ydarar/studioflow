@@ -10,7 +10,7 @@
     "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
-      "@demopilot/*": ["packages/*/src/index.ts"],
+      "@studioflow/*": ["packages/*/src/index.ts"],
       "playwright": ["packages/adapters-playwright/node_modules/playwright"]
     }
   },

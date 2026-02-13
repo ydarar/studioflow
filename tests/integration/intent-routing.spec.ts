@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeIntent } from "@demopilot/planner";
+import { routeIntent } from "@studioflow/planner";
 
 describe("routeIntent", () => {
   const known = ["billing", "onboarding", "onboarding_billing"];

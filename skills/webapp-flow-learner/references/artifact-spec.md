@@ -17,7 +17,7 @@
 - edges[] with from/to/via/confidence
 
 ## flow.json
-Use DemoPilot FlowDefinition schema:
+Use StudioFlow FlowDefinition schema:
 - id
 - description
 - tags[]

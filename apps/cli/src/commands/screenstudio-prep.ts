@@ -1,6 +1,6 @@
 import kleur from "kleur";
-import { ensureAutomationPermissions } from "@demopilot/adapters-desktop";
-import { activateScreenStudio, listRecordMenuItems } from "@demopilot/adapters-screenstudio";
+import { ensureAutomationPermissions } from "@studioflow/adapters-desktop";
+import { activateScreenStudio, listRecordMenuItems } from "@studioflow/adapters-screenstudio";
 
 const defaultAppName = process.env.SCREENSTUDIO_APP_NAME ?? "Screen Studio";
 

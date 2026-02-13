@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { LearningCandidate } from "@demopilot/contracts";
-import { getCandidateById, loadCandidateFromFile, loadCandidates } from "@demopilot/flow-registry";
+import type { LearningCandidate } from "@studioflow/contracts";
+import { getCandidateById, loadCandidateFromFile, loadCandidates } from "@studioflow/flow-registry";
 import { resolveFromWorkspace } from "./path-utils.js";
 
 export interface ResolvedCandidate {

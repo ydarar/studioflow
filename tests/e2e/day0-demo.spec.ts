@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeIntent } from "@demopilot/planner";
+import { routeIntent } from "@studioflow/planner";
 
 describe("day0 demo mapping", () => {
   it("handles canonical phrase", async () => {

@@ -4,7 +4,7 @@ const { runAppleScriptMock } = vi.hoisted(() => ({
   runAppleScriptMock: vi.fn(async (_script?: string) => ({ stdout: "", stderr: "" }))
 }));
 
-vi.mock("@demopilot/adapters-desktop", () => ({
+vi.mock("@studioflow/adapters-desktop", () => ({
   runAppleScript: runAppleScriptMock
 }));
 

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { FlowDefinition } from "@demopilot/contracts";
+import type { FlowDefinition } from "@studioflow/contracts";
 
 const {
   startBrowserMock,
@@ -20,18 +20,18 @@ const {
   writeCandidateMock: vi.fn()
 }));
 
-vi.mock("@demopilot/adapters-playwright", () => ({
+vi.mock("@studioflow/adapters-playwright", () => ({
   startBrowser: startBrowserMock,
   executeStep: executeStepMock
 }));
 
-vi.mock("@demopilot/adapters-screenstudio", () => ({
+vi.mock("@studioflow/adapters-screenstudio", () => ({
   startRecording: startRecordingMock,
   stopRecording: stopRecordingMock,
   exportRecording: exportRecordingMock
 }));
 
-vi.mock("@demopilot/flow-registry", () => ({
+vi.mock("@studioflow/flow-registry", () => ({
   writeCandidate: writeCandidateMock
 }));
 
@@ -73,10 +73,10 @@ describe.sequential("orchestrator engine", () => {
     exportRecordingMock.mockReset();
     writeCandidateMock.mockReset();
 
-    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "demopilot-orchestrator-"));
+    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-orchestrator-"));
     process.env = {
       ...originalEnv,
-      DEMOPILOT_RUNS_DIR: path.join(tempRoot, "runs")
+      STUDIOFLOW_RUNS_DIR: path.join(tempRoot, "runs")
     };
 
     const page = {

@@ -1,41 +1,58 @@
 # Configuration Reference
 
-DemoPilot behavior is controlled by environment variables loaded via `dotenv` in `apps/cli/src/index.ts`.
+StudioFlow behavior is controlled by environment variables loaded via `dotenv` in `apps/cli/src/index.ts`.
 
 ## Core runtime variables
 
-- `DEMOPILOT_RUNS_DIR`
+- `STUDIOFLOW_RUNS_DIR`
   - Default: `.runs`
   - Purpose: base directory for run artifacts.
   - Behavior: if relative, resolved against `INIT_CWD` when available.
 
-- `DEMOPILOT_BASE_URL`
+- `STUDIOFLOW_BASE_URL`
   - Default: `http://localhost:4173`
   - Purpose: base URL for `goto` and health checks.
 
-- `DEMOPILOT_HEADLESS`
+- `STUDIOFLOW_HEADLESS`
   - Default: `false`
   - Purpose: controls Playwright browser headless mode.
 
-- `DEMOPILOT_START_COMMAND`
-  - Default in run command: bootstrap report value, else `pnpm --filter @demopilot/sample-app dev`
+- `STUDIOFLOW_START_COMMAND`
+  - Default in run command: bootstrap report value, else `pnpm --filter @studioflow/sample-app dev`
   - Purpose: app startup command used by run lifecycle.
 
-- `DEMOPILOT_HEALTH_PATH`
+- `STUDIOFLOW_HEALTH_PATH`
   - Default in run command: bootstrap report value, else `/api/health`
   - Purpose: health endpoint path polled during startup.
 
-- `DEMOPILOT_BOOTSTRAP_REPORT`
+- `STUDIOFLOW_BOOTSTRAP_REPORT`
   - Default: `artifacts/bootstrap.json`
   - Purpose: path to bootstrap hints consumed by run command.
 
+- `STUDIOFLOW_DATA_DIR`
+  - Default: `~/.studioflow`
+  - Purpose: writable home for promoted flows, learning candidates, promotion records, and setup state.
+
+- `STUDIOFLOW_HOME`
+  - Default: unset
+  - Purpose: legacy alias for `STUDIOFLOW_DATA_DIR`.
+  - Behavior: only used when `STUDIOFLOW_DATA_DIR` is not set.
+
+- `CODEX_HOME`
+  - Default: `~/.codex`
+  - Purpose: base directory for `install-skills`/`setup` skill installation.
+
+- `STUDIOFLOW_SKILLS_SOURCE`
+  - Default: auto-detected bundled `skills` directory
+  - Purpose: override source location for bundled skill copy operations.
+
 ## Planning variables
 
-- `DEMOPILOT_PLAN_ARTIFACT`
+- `STUDIOFLOW_PLAN_ARTIFACT`
   - Default: unset
   - Purpose: fallback path for `--llm-plan` if flag is not provided.
 
-- `DEMOPILOT_PLAN_REPORT_OUT`
+- `STUDIOFLOW_PLAN_REPORT_OUT`
   - Default: `artifacts/plan-report.json`
   - Purpose: default output path for `plan-report.json`.
 
@@ -67,31 +84,31 @@ DemoPilot behavior is controlled by environment variables loaded via `dotenv` in
 
 ## Realism and pacing variables
 
-- `DEMOPILOT_RENDER_CURSOR`
+- `STUDIOFLOW_RENDER_CURSOR`
   - Default: `true`
   - Purpose: overlays visible cursor for recording clarity.
 
-- `DEMOPILOT_CURSOR_MOVE_MS`
+- `STUDIOFLOW_CURSOR_MOVE_MS`
   - Default: `320`
   - Purpose: cursor movement duration for click/type steps.
 
-- `DEMOPILOT_CURSOR_HIGHLIGHT_MS`
+- `STUDIOFLOW_CURSOR_HIGHLIGHT_MS`
   - Default: `120`
   - Purpose: hover pause before interaction.
 
-- `DEMOPILOT_REALISTIC_TYPING`
+- `STUDIOFLOW_REALISTIC_TYPING`
   - Default: `true`
   - Purpose: type per-character with keyboard events.
 
-- `DEMOPILOT_TYPING_DELAY_MS`
+- `STUDIOFLOW_TYPING_DELAY_MS`
   - Default: `35`
   - Purpose: per-character delay in realistic typing mode.
 
-- `DEMOPILOT_PACING_ADJUSTMENT`
+- `STUDIOFLOW_PACING_ADJUSTMENT`
   - Default: `true`
   - Purpose: applies flow-level duration multiplier produced by planner.
 
-- `DEMOPILOT_PACING_JITTER`
+- `STUDIOFLOW_PACING_JITTER`
   - Default: `true`
   - Purpose: applies small deterministic timing variance unless flow uses `strictPacing`.
 
@@ -104,13 +121,13 @@ DemoPilot behavior is controlled by environment variables loaded via `dotenv` in
 ## Resolution and precedence rules
 
 1. Run command start/health precedence
-- `DEMOPILOT_START_COMMAND` / `DEMOPILOT_HEALTH_PATH`
-- then bootstrap report (`DEMOPILOT_BOOTSTRAP_REPORT`)
+- `STUDIOFLOW_START_COMMAND` / `STUDIOFLOW_HEALTH_PATH`
+- then bootstrap report (`STUDIOFLOW_BOOTSTRAP_REPORT`)
 - then hardcoded defaults
 
 2. Planning LLM artifact precedence
 - `--llm-plan` flag
-- then `DEMOPILOT_PLAN_ARTIFACT`
+- then `STUDIOFLOW_PLAN_ARTIFACT`
 
 3. Workspace path resolution
 - Relative paths resolve from `INIT_CWD` when set.

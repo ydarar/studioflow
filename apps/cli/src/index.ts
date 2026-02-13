@@ -12,7 +12,9 @@ import { bootstrapCommand } from "./commands/bootstrap.js";
 import { replayCommand } from "./commands/replay.js";
 import { promoteCommand } from "./commands/promote.js";
 import { screenstudioPrepCommand } from "./commands/screenstudio-prep.js";
-import type { PacingProfile } from "@demopilot/contracts";
+import { setupCommand } from "./commands/setup.js";
+import { installSkillsCommand } from "./commands/install-skills.js";
+import type { PacingProfile } from "@studioflow/contracts";
 
 function readFlag(args: string[], flag: string) {
   const index = args.indexOf(flag);
@@ -26,6 +28,10 @@ function removeFlagPair(args: string[], flag: string) {
   const copy = [...args];
   copy.splice(index, 2);
   return copy;
+}
+
+function hasFlag(args: string[], flag: string) {
+  return args.includes(flag);
 }
 
 function parsePacingProfile(raw?: string): PacingProfile | undefined {
@@ -50,7 +56,7 @@ async function main() {
       const intentArgs = removeFlagPair(removeFlagPair(normalizedArgs, "--flow"), "--intent");
       const intent = intentArgs.join(" ").trim();
       if (!intent) {
-        throw new Error("Usage: demopilot run \"<intent>\" OR demopilot run --flow <path>");
+        throw new Error("Usage: studioflow run \"<intent>\" OR studioflow run --flow <path>");
       }
       await runIntentCommand(intent);
       return;
@@ -74,11 +80,28 @@ async function main() {
       return;
     }
 
+    if (command === "setup") {
+      await setupCommand({
+        skipSkills: hasFlag(normalizedArgs, "--skip-skills"),
+        forceSkills: hasFlag(normalizedArgs, "--force-skills"),
+        skillsTargetDir: readFlag(normalizedArgs, "--skills-target")
+      });
+      return;
+    }
+
+    if (command === "install-skills") {
+      await installSkillsCommand({
+        force: hasFlag(normalizedArgs, "--force"),
+        targetDir: readFlag(normalizedArgs, "--target")
+      });
+      return;
+    }
+
     if (command === "plan") {
       const intent = readFlag(normalizedArgs, "--intent") ?? normalizedArgs.filter((a) => !a.startsWith("--")).join(" ").trim();
       if (!intent) {
         throw new Error(
-          "Usage: demopilot plan --intent \"<intent>\" [--report artifacts/structure-report.json] [--out artifacts/flow.json] [--llm-plan artifacts/llm-plan.json] [--plan-report artifacts/plan-report.json] [--pacing-profile fast|standard|cinematic] [--target-duration-sec <int>] [--emphasis <path/to/emphasis.json>]"
+          "Usage: studioflow plan --intent \"<intent>\" [--report artifacts/structure-report.json] [--out artifacts/flow.json] [--llm-plan artifacts/llm-plan.json] [--plan-report artifacts/plan-report.json] [--pacing-profile fast|standard|cinematic] [--target-duration-sec <int>] [--emphasis <path/to/emphasis.json>]"
         );
       }
       const reportPath = readFlag(normalizedArgs, "--report") ?? "artifacts/structure-report.json";
@@ -135,7 +158,7 @@ async function main() {
       const attemptsRaw = readFlag(normalizedArgs, "--attempts");
       const attempts = attemptsRaw ? Number(attemptsRaw) : undefined;
       if (attemptsRaw && Number.isNaN(attempts)) {
-        throw new Error("Usage: demopilot replay [--candidate <candidateId|path>] [--attempts <number>]");
+        throw new Error("Usage: studioflow replay [--candidate <candidateId|path>] [--attempts <number>]");
       }
       await replayCommand({ candidateRef, attempts });
       return;
@@ -150,10 +173,10 @@ async function main() {
       const minStability = minStabilityRaw ? Number(minStabilityRaw) : undefined;
 
       if (minPassesRaw && Number.isNaN(minPasses)) {
-        throw new Error("Usage: demopilot promote [--candidate <candidateId|path>] [--flow-id <id>] [--min-passes <number>] [--min-stability <0..1>]");
+        throw new Error("Usage: studioflow promote [--candidate <candidateId|path>] [--flow-id <id>] [--min-passes <number>] [--min-stability <0..1>]");
       }
       if (minStabilityRaw && Number.isNaN(minStability)) {
-        throw new Error("Usage: demopilot promote [--candidate <candidateId|path>] [--flow-id <id>] [--min-passes <number>] [--min-stability <0..1>]");
+        throw new Error("Usage: studioflow promote [--candidate <candidateId|path>] [--flow-id <id>] [--min-passes <number>] [--min-stability <0..1>]");
       }
 
       await promoteCommand({ candidateRef, flowId, minPasses, minStability });
@@ -163,7 +186,7 @@ async function main() {
     throw new Error(`Unknown command: ${command}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(kleur.red(`DemoPilot error: ${message}`));
+    console.error(kleur.red(`StudioFlow error: ${message}`));
     process.exit(1);
   }
 }

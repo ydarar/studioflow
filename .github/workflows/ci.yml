@@ -28,7 +28,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Chromium for Playwright tests
-        run: pnpm --filter @demopilot/adapters-playwright exec playwright install --with-deps chromium
+        run: pnpm --filter @studioflow/adapters-playwright exec playwright install --with-deps chromium
 
       - name: Typecheck
         run: pnpm run typecheck

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to DemoPilot.
+Thanks for contributing to StudioFlow.
 
 ## Prerequisites
 

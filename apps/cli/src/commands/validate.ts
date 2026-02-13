@@ -1,11 +1,11 @@
 import kleur from "kleur";
-import { loadFlowFromFile } from "@demopilot/flow-registry";
+import { loadFlowFromFile } from "@studioflow/flow-registry";
 import { validateFlowDefinition } from "./flow-validation.js";
 import { resolveFromWorkspace } from "./path-utils.js";
 
 export async function validateCommand(flowPath: string) {
   if (!flowPath) {
-    throw new Error("Usage: demopilot validate --flow <path/to/flow.json|yaml>");
+    throw new Error("Usage: studioflow validate --flow <path/to/flow.json|yaml>");
   }
 
   const resolvedPath = resolveFromWorkspace(flowPath);

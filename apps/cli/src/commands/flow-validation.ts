@@ -1,4 +1,4 @@
-import type { FlowDefinition, FlowStep } from "@demopilot/contracts";
+import type { FlowDefinition, FlowStep } from "@studioflow/contracts";
 
 export interface FlowValidationResult {
   valid: boolean;

@@ -1,6 +1,6 @@
 # CLI Reference
 
-DemoPilot CLI entrypoint: `apps/cli/src/index.ts`
+StudioFlow CLI entrypoint: `apps/cli/src/index.ts`
 
 Use via workspace scripts from repo root:
 
@@ -22,16 +22,17 @@ pnpm discover -- --out artifacts
 Intent mode:
 
 ```bash
-demopilot run "<intent>"
+studioflow run "<intent>"
 ```
 
 Flow artifact mode:
 
 ```bash
-demopilot run --flow <path/to/flow.json|yaml> [--intent "<label>"]
+studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"]
 ```
 
 Behavior:
+- Auto-installs Playwright Chromium on first run if missing.
 - Ensures automation permissions.
 - Validates selected flows before execution.
 - Resolves app start command and health path.
@@ -40,7 +41,7 @@ Behavior:
 2. `bootstrap`
 
 ```bash
-demopilot bootstrap [--out artifacts/bootstrap.json]
+studioflow bootstrap [--out artifacts/bootstrap.json]
 ```
 
 Behavior:
@@ -50,7 +51,7 @@ Behavior:
 3. `discover`
 
 ```bash
-demopilot discover [--out artifacts]
+studioflow discover [--out artifacts]
 ```
 
 Behavior:
@@ -62,7 +63,7 @@ Behavior:
 4. `plan`
 
 ```bash
-demopilot plan --intent "<intent>" [--report artifacts/structure-report.json] [--out artifacts/flow.json] [--llm-plan artifacts/llm-plan.json] [--plan-report artifacts/plan-report.json] [--pacing-profile fast|standard|cinematic] [--target-duration-sec <int>] [--emphasis <path/to/emphasis.json>]
+studioflow plan --intent "<intent>" [--report artifacts/structure-report.json] [--out artifacts/flow.json] [--llm-plan artifacts/llm-plan.json] [--plan-report artifacts/plan-report.json] [--pacing-profile fast|standard|cinematic] [--target-duration-sec <int>] [--emphasis <path/to/emphasis.json>]
 ```
 
 Selection order:
@@ -84,7 +85,7 @@ Output:
 5. `validate`
 
 ```bash
-demopilot validate --flow <path/to/flow.json|yaml>
+studioflow validate --flow <path/to/flow.json|yaml>
 ```
 
 Behavior:
@@ -95,7 +96,7 @@ Behavior:
 6. `doctor`
 
 ```bash
-demopilot doctor
+studioflow doctor
 ```
 
 Behavior:
@@ -106,7 +107,7 @@ Behavior:
 7. `screenstudio-prep`
 
 ```bash
-demopilot screenstudio-prep [--app-name "Screen Studio"]
+studioflow screenstudio-prep [--app-name "Screen Studio"]
 ```
 
 Behavior:
@@ -116,7 +117,7 @@ Behavior:
 8. `list-flows`
 
 ```bash
-demopilot list-flows
+studioflow list-flows
 ```
 
 Behavior:
@@ -125,7 +126,7 @@ Behavior:
 9. `list-candidates`
 
 ```bash
-demopilot list-candidates
+studioflow list-candidates
 ```
 
 Behavior:
@@ -134,7 +135,7 @@ Behavior:
 10. `replay`
 
 ```bash
-demopilot replay [--candidate <candidate-id|path>] [--attempts <n>]
+studioflow replay [--candidate <candidate-id|path>] [--attempts <n>]
 ```
 
 Behavior:
@@ -146,7 +147,7 @@ Behavior:
 11. `promote`
 
 ```bash
-demopilot promote [--candidate <candidate-id|path>] [--flow-id <id>] [--min-passes <n>] [--min-stability <0..1>]
+studioflow promote [--candidate <candidate-id|path>] [--flow-id <id>] [--min-passes <n>] [--min-stability <0..1>]
 ```
 
 Behavior:
@@ -154,7 +155,28 @@ Behavior:
 - Writes promoted flow into deterministic registry.
 - Writes promotion record and persists candidate state.
 
+12. `setup`
+
+```bash
+studioflow setup [--skip-skills] [--force-skills] [--skills-target <dir>]
+```
+
+Behavior:
+- Ensures Playwright Chromium is installed.
+- Installs bundled StudioFlow skills to `$CODEX_HOME/skills` or `~/.codex/skills`.
+- Runs non-blocking permission diagnostics and writes setup state.
+
+13. `install-skills`
+
+```bash
+studioflow install-skills [--force] [--target <dir>]
+```
+
+Behavior:
+- Copies bundled skills (`studioflow-cli-operator`, `webapp-flow-learner`) into Codex skills directory.
+- Skips existing skills unless `--force` is set.
+
 ## Exit behavior
 
-- Unknown command or command failure prints `DemoPilot error: <message>` and exits with code `1`.
+- Unknown command or command failure prints `StudioFlow error: <message>` and exits with code `1`.
 - Successful commands print file paths or run metadata for operator inspection.

@@ -1,12 +1,12 @@
 import os from "node:os";
 import path from "node:path";
 
-export function getDemopilotDataDir() {
-  const configured = process.env.DEMOPILOT_DATA_DIR ?? process.env.DEMOPILOT_HOME;
+export function getStudioflowDataDir() {
+  const configured = process.env.STUDIOFLOW_DATA_DIR ?? process.env.STUDIOFLOW_HOME;
   if (configured && configured.trim()) {
     return path.resolve(configured);
   }
-  return path.join(os.homedir(), ".demopilot");
+  return path.join(os.homedir(), ".studioflow");
 }
 
 export function getCodexSkillsDir() {

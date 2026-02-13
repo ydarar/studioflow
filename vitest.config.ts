@@ -13,7 +13,7 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^@demopilot\/(.+)$/,
+        find: /^@studioflow\/(.+)$/,
         replacement: path.resolve(__dirname, "packages/$1/src/index.ts")
       }
     ],

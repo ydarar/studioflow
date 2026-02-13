@@ -1,10 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { learningCandidateSchema, type FlowDefinition, type RunArtifactIndex } from "@demopilot/contracts";
-import { appendJsonLine, createRunContext, writeJsonFile } from "@demopilot/artifacts";
-import { executeStep, startBrowser } from "@demopilot/adapters-playwright";
-import { exportRecording, startRecording, stopRecording } from "@demopilot/adapters-screenstudio";
-import { writeCandidate } from "@demopilot/flow-registry";
+import { learningCandidateSchema, type FlowDefinition, type RunArtifactIndex } from "@studioflow/contracts";
+import { appendJsonLine, createRunContext, writeJsonFile } from "@studioflow/artifacts";
+import { executeStep, startBrowser } from "@studioflow/adapters-playwright";
+import { exportRecording, startRecording, stopRecording } from "@studioflow/adapters-screenstudio";
+import { writeCandidate } from "@studioflow/flow-registry";
 import { withRetry } from "./retry-policy.js";
 import type { EngineState } from "./state-machine.js";
 
@@ -85,7 +85,7 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
     await emit("recorder.start.done");
 
     state = "RUN_FLOW";
-    const runtimePacingEnabled = (process.env.DEMOPILOT_PACING_ADJUSTMENT ?? "true").toLowerCase() !== "false";
+    const runtimePacingEnabled = (process.env.STUDIOFLOW_PACING_ADJUSTMENT ?? "true").toLowerCase() !== "false";
     for (const flow of input.flows) {
       await emit("flow.begin", { flowId: flow.id });
       const flowMultiplier = runtimePacingEnabled ? flow.pacing?.durationMultiplier ?? 1 : 1;

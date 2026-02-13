@@ -1,5 +1,5 @@
 import kleur from "kleur";
-import { loadFlows } from "@demopilot/flow-registry";
+import { loadFlows } from "@studioflow/flow-registry";
 
 export async function listFlowsCommand() {
   const flows = await loadFlows();

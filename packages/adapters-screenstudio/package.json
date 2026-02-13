@@ -1,5 +1,5 @@
 {
-  "name": "@demopilot/adapters-screenstudio",
+  "name": "@studioflow/adapters-screenstudio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@demopilot/adapters-desktop": "workspace:*"
+    "@studioflow/adapters-desktop": "workspace:*"
   }
 }

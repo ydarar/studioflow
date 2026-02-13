@@ -1,8 +1,8 @@
-# DemoPilot Architecture
+# StudioFlow Architecture
 
 ## Purpose
 
-DemoPilot is a deterministic demo automation runtime that maps operator intent to known flows, executes browser actions with pacing, and controls Screen Studio recording on macOS.
+StudioFlow is a deterministic demo automation runtime that maps operator intent to known flows, executes browser actions with pacing, and controls Screen Studio recording on macOS.
 
 ## System layers
 
@@ -40,7 +40,7 @@ DemoPilot is a deterministic demo automation runtime that maps operator intent t
 
 ## Runtime sequence
 
-1. Operator runs `demopilot run \"<intent>\"` or `demopilot run --flow <file>`.
+1. Operator runs `studioflow run \"<intent>\"` or `studioflow run --flow <file>`.
 2. CLI resolves flows and validates each flow definition.
 3. Engine creates run context (`.runs/<run-id>`) and launches browser.
 4. Engine starts app lifecycle (reuse existing app if health endpoint is already healthy).
@@ -48,7 +48,7 @@ DemoPilot is a deterministic demo automation runtime that maps operator intent t
 6. Engine executes every step in every selected flow with per-step retry policy.
 7. Engine stops recorder and triggers export.
 8. Engine writes run artifacts (`plan.json`, `run.json`, `events.jsonl`).
-9. Engine synthesizes and stores a learning candidate under `packages/flow-registry/learned/candidates`.
+9. Engine synthesizes and stores a learning candidate under `~/.studioflow/learned/candidates` (or `$STUDIOFLOW_DATA_DIR/learned/candidates`).
 
 ## Engine state machine
 

@@ -1,5 +1,5 @@
 {
-  "name": "@demopilot/sample-app",
+  "name": "@studioflow/sample-app",
   "private": true,
   "type": "module",
   "scripts": {

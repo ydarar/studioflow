@@ -1,9 +1,9 @@
 ---
-name: demopilot-cli-operator
-description: Execute validated demo artifacts with DemoPilot CLI. Use when the user wants to run a generated flow.json, validate flow artifacts, trigger recording, inspect run artifacts, or troubleshoot deterministic run failures.
+name: studioflow-cli-operator
+description: Execute validated demo artifacts with StudioFlow CLI. Use when the user wants to run a generated flow.json, validate flow artifacts, trigger recording, inspect run artifacts, or troubleshoot deterministic run failures.
 ---
 
-# DemoPilot CLI Operator
+# StudioFlow CLI Operator
 
 Run validated artifacts through deterministic execution.
 
@@ -18,6 +18,7 @@ Run validated artifacts through deterministic execution.
 2. Run doctor checks:
 
 ```bash
+pnpm setup
 pnpm run doctor
 pnpm screenstudio-prep
 ```

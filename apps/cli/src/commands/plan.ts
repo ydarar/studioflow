@@ -16,9 +16,9 @@ import {
   type PacingProfile,
   type PlanReport,
   type StructureReport
-} from "@demopilot/contracts";
-import { getFlowById, loadFlows } from "@demopilot/flow-registry";
-import { routeIntent } from "@demopilot/planner";
+} from "@studioflow/contracts";
+import { getFlowById, loadFlows } from "@studioflow/flow-registry";
+import { routeIntent } from "@studioflow/planner";
 
 interface LlmPlanArtifact {
   selectedFlowId?: string;
@@ -404,7 +404,7 @@ export async function planCommand(opts: {
     .map((flow) => ({ flow, score: scoreFlow(opts.intent, flow) }))
     .sort((a, b) => b.score - a.score);
 
-  const llmPath = opts.llmPlanPath ?? process.env.DEMOPILOT_PLAN_ARTIFACT;
+  const llmPath = opts.llmPlanPath ?? process.env.STUDIOFLOW_PLAN_ARTIFACT;
   let llmArtifact: LlmPlanArtifact | null = null;
 
   if (llmPath) {
@@ -471,7 +471,7 @@ export async function planCommand(opts: {
   const selected = compilePacing(selectedRaw, directives);
   const validated = flowDefinitionSchema.parse(selected);
   const outputPath = resolveFromWorkspace(opts.outPath);
-  const planReportPath = resolveFromWorkspace(opts.planReportOut ?? process.env.DEMOPILOT_PLAN_REPORT_OUT ?? "artifacts/plan-report.json");
+  const planReportPath = resolveFromWorkspace(opts.planReportOut ?? process.env.STUDIOFLOW_PLAN_REPORT_OUT ?? "artifacts/plan-report.json");
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.mkdir(path.dirname(planReportPath), { recursive: true });
   await fs.writeFile(outputPath, JSON.stringify(validated, null, 2), "utf8");

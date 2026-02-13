@@ -3,7 +3,7 @@ import {
   checkPermissions,
   openPermissionSettings,
   triggerPermissionPrompts
-} from "@demopilot/adapters-desktop";
+} from "@studioflow/adapters-desktop";
 
 export async function doctorCommand() {
   const permissions = await checkPermissions();

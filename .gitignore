@@ -4,10 +4,9 @@ dist
 coverage
 .runs
 apps/cli/.runs
+apps/cli/skills
 artifacts
 apps/cli/artifacts
-packages/flow-registry/learned/candidates
-packages/flow-registry/learned/promotions
 .env
 pnpm-lock.yaml
 playwright-report

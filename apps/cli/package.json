@@ -1,12 +1,37 @@
 {
-  "name": "@demopilot/cli",
-  "private": true,
+  "name": "@ydarar/studioflow",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Deterministic AI-assisted product demo automation CLI for Screen Studio workflows",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "darwin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "flows",
+    "scripts/sync-skills.mjs",
+    "scripts/build.mjs",
+    "tsconfig.json",
+    "package.json"
+  ],
   "bin": {
-    "demopilot": "src/index.ts"
+    "studioflow": "dist/index.js"
   },
   "scripts": {
+    "prepare:assets": "node scripts/sync-skills.mjs",
+    "build": "node scripts/build.mjs",
+    "prepack": "node scripts/sync-skills.mjs && node scripts/build.mjs",
     "demo": "tsx src/index.ts run",
+    "setup": "tsx src/index.ts setup",
+    "install-skills": "tsx src/index.ts install-skills",
     "discover": "tsx src/index.ts discover",
     "bootstrap": "tsx src/index.ts bootstrap",
     "screenstudio-prep": "tsx src/index.ts screenstudio-prep",
@@ -19,15 +44,20 @@
     "list-candidates": "tsx src/index.ts list-candidates"
   },
   "dependencies": {
-    "@demopilot/adapters-desktop": "workspace:*",
-    "@demopilot/adapters-playwright": "workspace:*",
-    "@demopilot/adapters-screenstudio": "workspace:*",
-    "@demopilot/artifacts": "workspace:*",
-    "@demopilot/contracts": "workspace:*",
-    "@demopilot/flow-registry": "workspace:*",
-    "@demopilot/orchestrator": "workspace:*",
-    "@demopilot/planner": "workspace:*",
+    "playwright": "^1.55.0"
+  },
+  "devDependencies": {
+    "@studioflow/adapters-desktop": "workspace:*",
+    "@studioflow/adapters-playwright": "workspace:*",
+    "@studioflow/adapters-screenstudio": "workspace:*",
+    "@studioflow/artifacts": "workspace:*",
+    "@studioflow/contracts": "workspace:*",
+    "@studioflow/flow-registry": "workspace:*",
+    "@studioflow/orchestrator": "workspace:*",
+    "@studioflow/planner": "workspace:*",
     "dotenv": "^16.4.7",
-    "kleur": "^4.1.5"
+    "esbuild": "^0.25.11",
+    "kleur": "^4.1.5",
+    "tsx": "^4.20.5"
   }
 }

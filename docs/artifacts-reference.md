@@ -1,11 +1,11 @@
 # Artifacts Reference
 
-This document describes every artifact DemoPilot emits and where it is stored.
+This document describes every artifact StudioFlow emits and where it is stored.
 
 ## Bootstrap and planning artifacts (`artifacts/`)
 
 1. `bootstrap.json`
-- Producer: `demopilot bootstrap`
+- Producer: `studioflow bootstrap`
 - Schema: `bootstrapReportSchema`
 - Key fields:
   - `packageManager`, `projectType`
@@ -13,7 +13,7 @@ This document describes every artifact DemoPilot emits and where it is stored.
   - `notes`
 
 2. `structure-report.json`
-- Producer: `demopilot discover`
+- Producer: `studioflow discover`
 - Schema: `structureReportSchema`
 - Key fields:
   - `frameworkHints`, `startCommands`
@@ -21,14 +21,14 @@ This document describes every artifact DemoPilot emits and where it is stored.
   - `existingFlowIds`
 
 3. `navigation-graph.json`
-- Producer: `demopilot discover`
+- Producer: `studioflow discover`
 - Schema: `navigationGraphSchema`
 - Key fields:
   - `nodes`: route map
   - `edges`: inferred route transitions with confidence and evidence
 
 4. `flow.json`
-- Producer: `demopilot plan`
+- Producer: `studioflow plan`
 - Schema: `flowDefinitionSchema`
 - Purpose: deterministic executable flow artifact.
 - Additional pacing metadata:
@@ -40,7 +40,7 @@ This document describes every artifact DemoPilot emits and where it is stored.
   - optional emphasis directives
 
 5. `plan-report.json`
-- Producer: `demopilot plan`
+- Producer: `studioflow plan`
 - Schema: `planReportSchema`
 - Key fields:
   - `source` (`heuristic` or `llm-artifact`)
@@ -72,7 +72,7 @@ Files:
 - `screenshots/`
   - Step screenshots and failure screenshot (`failure.png`) on fatal errors.
 
-## Learning artifacts (`packages/flow-registry/learned`)
+## Learning artifacts (`~/.studioflow/learned` or `$STUDIOFLOW_DATA_DIR/learned`)
 
 1. Candidate artifacts (`learned/candidates/*.json`)
 - Producer: orchestrator success path via `writeCandidate`.
@@ -85,7 +85,7 @@ Files:
   - `validationState`
 
 2. Promotion records (`learned/promotions/*.json`)
-- Producer: `demopilot promote`.
+- Producer: `studioflow promote`.
 - Schema: `promotionRecordSchema`.
 - Key fields:
   - candidate and promoted flow IDs
@@ -94,10 +94,11 @@ Files:
 
 ## Deterministic flow registry
 
-- Location: `packages/flow-registry/flows/*.yaml`
+- Built-in flow location: `packages/flow-registry/flows/*.yaml`
+- Promoted/user flow location: `~/.studioflow/flows/*.yaml` (or `$STUDIOFLOW_DATA_DIR/flows`)
 - Producers:
-  - Hand-authored deterministic flows.
-  - `demopilot promote` for approved learned flows.
+  - Hand-authored deterministic flows (built-in).
+  - `studioflow promote` for approved learned flows (user flow directory).
 
 ## Event stream semantics
 

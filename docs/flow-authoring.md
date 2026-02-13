@@ -1,6 +1,6 @@
 # Flow Authoring
 
-Flow definitions are deterministic artifacts stored in `packages/flow-registry/flows` as YAML or JSON.
+Flow definitions are deterministic artifacts. Built-in flows live in `packages/flow-registry/flows`, and promoted/user flows are written to `~/.studioflow/flows` (or `$STUDIOFLOW_DATA_DIR/flows`).
 
 ## Flow schema
 
@@ -44,7 +44,7 @@ Step fields:
 
 1. `goto`
 - Uses `value` as route or URL.
-- Relative routes are resolved against `DEMOPILOT_BASE_URL`.
+- Relative routes are resolved against `STUDIOFLOW_BASE_URL`.
 
 2. `click`
 - Requires `target`.
@@ -53,7 +53,7 @@ Step fields:
 3. `type`
 - Requires `target`.
 - Writes `value` into input.
-- May type per-character when `DEMOPILOT_REALISTIC_TYPING=true`.
+- May type per-character when `STUDIOFLOW_REALISTIC_TYPING=true`.
 
 4. `wait_for`
 - Requires `target` or `value`.
@@ -76,7 +76,7 @@ Step fields:
 
 ## Validation rules
 
-`demopilot validate` checks:
+`studioflow validate` checks:
 
 - Flow has at least one step.
 - `click`, `type`, `assert_visible` require `target`.

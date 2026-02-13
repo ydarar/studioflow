@@ -1,6 +1,6 @@
 ---
 name: webapp-flow-learner
-description: Learn an arbitrary web project and generate navigation artifacts for DemoPilot. Use when the user asks to discover app structure, map routes/components/actions, generate structure-report.json/navigation-graph.json, or synthesize a candidate flow.json from natural-language demo intent.
+description: Learn an arbitrary web project and generate navigation artifacts for StudioFlow. Use when the user asks to discover app structure, map routes/components/actions, generate structure-report.json/navigation-graph.json, or synthesize a candidate flow.json from natural-language demo intent.
 ---
 
 # Webapp Flow Learner
@@ -16,7 +16,7 @@ Generate deterministic demo-planning artifacts for any web app.
 pnpm bootstrap -- --out artifacts/bootstrap.json
 ```
 
-3. Generate a project structure report using the DemoPilot CLI:
+3. Generate a project structure report using the StudioFlow CLI:
 
 ```bash
 pnpm discover -- --out artifacts

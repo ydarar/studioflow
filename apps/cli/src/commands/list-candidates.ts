@@ -1,4 +1,4 @@
-import { loadCandidates } from "@demopilot/flow-registry";
+import { loadCandidates } from "@studioflow/flow-registry";
 import kleur from "kleur";
 
 export async function listCandidatesCommand() {

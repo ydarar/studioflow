@@ -1,4 +1,4 @@
-import type { IntentMapping } from "@demopilot/contracts";
+import type { IntentMapping } from "@studioflow/contracts";
 
 export async function routeIntent(intent: string, knownFlowIds: string[]): Promise<IntentMapping> {
   const normalized = intent.toLowerCase();

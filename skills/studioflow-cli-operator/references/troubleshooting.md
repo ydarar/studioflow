@@ -10,8 +10,8 @@
 
 ## Browser executable failures
 - Error: Playwright Chromium not installed
-- Action: `pnpm --filter @demopilot/adapters-playwright exec playwright install chromium`
+- Action: `studioflow setup` (or `pnpm setup` in this repo)
 
 ## Artifact path checks
 - Run artifacts under `.runs/<run-id>/`
-- Candidate learned flow under `packages/flow-registry/learned/candidates/`
+- Candidate learned flow under `~/.studioflow/learned/candidates/` (or `$STUDIOFLOW_DATA_DIR/learned/candidates/`)

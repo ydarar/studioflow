@@ -1,4 +1,4 @@
-import { runAppleScript } from "@demopilot/adapters-desktop";
+import { runAppleScript } from "@studioflow/adapters-desktop";
 
 function quote(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');

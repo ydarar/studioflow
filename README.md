@@ -1,6 +1,6 @@
-# DemoPilot
+# StudioFlow
 
-DemoPilot is a CLI-first deterministic demo automation runtime for recording product demos with Screen Studio.
+StudioFlow is a CLI-first deterministic demo automation runtime for recording product demos with Screen Studio.
 
 ## Platform support
 
@@ -13,6 +13,8 @@ DemoPilot is a CLI-first deterministic demo automation runtime for recording pro
 ```bash
 pnpm install
 cp .env.example .env
+pnpm setup
+# optional strict check + macOS prompt flow:
 pnpm run doctor
 pnpm screenstudio-prep
 pnpm demo -- "show onboarding and billing"
