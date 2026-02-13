@@ -64,6 +64,16 @@ pnpm validate -- --flow artifacts/flow.json
 
 7. If validation fails, edit flow actions/selectors and rerun validation.
 
+8. Emit deterministic runtime handoff for `studioflow-cli`.
+
+Write `artifacts/studioflow-cli-handoff.json` using `references/cli-handoff-spec.md`.
+
+9. Hand off execution to `studioflow-cli` immediately.
+
+- If your host supports explicit skill invocation, invoke `studioflow-cli` in the same turn using the handoff payload.
+- If explicit skill invocation is unavailable, execute the equivalent CLI run workflow directly in the same turn.
+- Do not stop at "here is the command to run" when the user intent is to run/record a demo.
+
 ## Output Requirements
 
 Always produce these files for handoff to runtime execution:
@@ -71,6 +81,7 @@ Always produce these files for handoff to runtime execution:
 2. `artifacts/structure-report.json`
 3. `artifacts/navigation-graph.json`
 4. `artifacts/flow.json`
+5. `artifacts/studioflow-cli-handoff.json`
 
 Always include a concise handoff summary in the response:
 - resolved intent anchors
@@ -81,3 +92,4 @@ Use references in:
 - `references/artifact-spec.md`
 - `references/question-card-spec.md`
 - `references/clarification-state.md`
+- `references/cli-handoff-spec.md`
