@@ -78,22 +78,25 @@ const cursorOverlaySetupScript = (clickPulseMs: number) => `
         position: fixed;
         top: 0;
         left: 0;
-        width: 16px;
-        height: 16px;
-        border-radius: 999px;
-        border: 2px solid rgba(2, 6, 23, 0.9);
-        background: rgba(255, 255, 255, 0.78);
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95), 0 4px 14px rgba(2, 6, 23, 0.28);
+        width: 22px;
+        height: 30px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='30' viewBox='0 0 22 30'%3E%3Cpath d='M1.5 1.5V22.2L7.4 17.4L11 28.5L14.4 27L10.8 15.9H19.6L1.5 1.5Z' fill='white' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-size: 22px 30px;
         pointer-events: none;
         z-index: 2147483647;
-        transform: translate3d(8px, 8px, 0);
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55));
+        transform: translate3d(16px, 16px, 0);
         transition-property: transform;
         transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
       }
       #studioflow-cursor::after {
         content: "";
         position: absolute;
-        inset: -8px;
+        left: -8px;
+        top: -8px;
+        width: 20px;
+        height: 20px;
         border-radius: 999px;
         border: 2px solid rgba(59, 130, 246, 0.72);
         opacity: 0;
@@ -121,7 +124,7 @@ const cursorOverlaySetupScript = (clickPulseMs: number) => `
     x = nextX;
     y = nextY;
     cursor.style.transitionDuration = \`\${Math.max(0, durationMs)}ms\`;
-    cursor.style.transform = \`translate3d(\${x - 8}px, \${y - 8}px, 0)\`;
+    cursor.style.transform = \`translate3d(\${x}px, \${y}px, 0)\`;
   };
 
   win.__studioflowCursor = {
