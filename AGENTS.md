@@ -36,3 +36,17 @@ If a change does not improve this path, it should be rejected, deferred, or expl
 - Improves reliability, clarity, or speed of one or more steel-thread steps.
 - Does not add conflicting UX that bypasses the steel thread without an explicit product decision.
 
+## Commit Convention (Required)
+
+Use simple Conventional Commit messages:
+
+- Format: `<type>: <short description>`
+- Keep descriptions short, lowercase, and specific.
+- Prefer one concern per commit.
+- Use common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
+
+Examples:
+
+- `feat: add studioflow cli handoff artifact`
+- `fix: resolve headless browser launch regression`
+- `docs: simplify quickstart instructions`
