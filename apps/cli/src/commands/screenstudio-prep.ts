@@ -2,14 +2,33 @@ import kleur from "kleur";
 import { ensureAutomationPermissions } from "@studioflow/adapters-desktop";
 import { activateScreenStudio, listRecordMenuItems } from "@studioflow/adapters-screenstudio";
 
-const defaultAppName = process.env.SCREENSTUDIO_APP_NAME ?? "Screen Studio";
+export const defaultScreenStudioAppName = process.env.SCREENSTUDIO_APP_NAME ?? "Screen Studio";
 
-function hasRecordingEntry(items: string[]) {
+export interface ScreenStudioPrepOptions {
+  appName?: string;
+  ensurePermissions?: boolean;
+  quiet?: boolean;
+}
+
+export interface ScreenStudioPrepResult {
+  appName: string;
+  recordMenuItems: string[];
+}
+
+export function hasRecordingEntry(items: string[]) {
   return items.includes("Record display") || items.includes("Stop recording");
 }
 
-export async function screenstudioPrepCommand(appName = defaultAppName) {
-  await ensureAutomationPermissions();
+export async function runScreenStudioPreflight(
+  opts: ScreenStudioPrepOptions = {}
+): Promise<ScreenStudioPrepResult> {
+  const appName = opts.appName ?? defaultScreenStudioAppName;
+  const ensurePermissions = opts.ensurePermissions ?? true;
+
+  if (ensurePermissions) {
+    await ensureAutomationPermissions();
+  }
+
   await activateScreenStudio(appName);
   const items = await listRecordMenuItems(appName);
 
@@ -25,7 +44,20 @@ export async function screenstudioPrepCommand(appName = defaultAppName) {
     );
   }
 
-  console.log(kleur.green("Screen Studio prep passed."));
-  console.log(`- App: ${appName}`);
-  console.log(`- Record menu items: ${items.join(", ")}`);
+  const result = {
+    appName,
+    recordMenuItems: items
+  };
+
+  if (!opts.quiet) {
+    console.log(kleur.green("Screen Studio prep passed."));
+    console.log(`- App: ${appName}`);
+    console.log(`- Record menu items: ${items.join(", ")}`);
+  }
+
+  return result;
+}
+
+export async function screenstudioPrepCommand(appName = defaultScreenStudioAppName) {
+  await runScreenStudioPreflight({ appName, ensurePermissions: true, quiet: false });
 }

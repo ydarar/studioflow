@@ -5,7 +5,7 @@ StudioFlow CLI entrypoint: `apps/cli/src/index.ts`
 Use via workspace scripts from repo root:
 
 ```bash
-pnpm demo -- "show onboarding and billing"
+pnpm demo -- --flow artifacts/flow.json --intent "billing demo"
 pnpm discover -- --out artifacts
 ```
 
@@ -13,29 +13,30 @@ pnpm discover -- --out artifacts
 
 - Default command is `run` if no command is provided.
 - `run` and `demo` are aliases.
-- For `run`/`demo`, `--flow` switches execution from intent-routing to artifact-driven execution.
+- Runtime execution is artifact-only. `--flow` is required.
+- Natural-language open intent should be resolved in agent skill workflow (`studioflow-investigate`) before CLI execution.
 
 ## Commands
 
 1. `run` / `demo`
 
-Intent mode:
-
-```bash
-studioflow run "<intent>"
-```
-
-Flow artifact mode:
-
 ```bash
 studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"]
+```
+
+Optional per-run overrides:
+
+```bash
+studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]
 ```
 
 Behavior:
 - Auto-installs Playwright Chromium on first run if missing.
 - Ensures automation permissions.
-- Validates selected flows before execution.
-- Resolves app start command and health path.
+- Runs Screen Studio Record-menu preflight before execution.
+- Validates provided flow artifact before execution.
+- Resolves runtime config from flags, config files, bootstrap report, and defaults.
+- Reuses an already-healthy app when possible; if app is not healthy and no `startCommand` resolves, run fails with guidance.
 - Runs orchestrator engine and prints artifact location.
 
 2. `bootstrap`
@@ -60,29 +61,7 @@ Behavior:
 - Infers navigation graph edges from `href` and `router.push` usage.
 - Writes `structure-report.json` and `navigation-graph.json`.
 
-4. `plan`
-
-```bash
-studioflow plan --intent "<intent>" [--report artifacts/structure-report.json] [--out artifacts/flow.json] [--llm-plan artifacts/llm-plan.json] [--plan-report artifacts/plan-report.json] [--pacing-profile fast|standard|cinematic] [--target-duration-sec <int>] [--emphasis <path/to/emphasis.json>]
-```
-
-Selection order:
-- LLM-selected existing flow ID (if valid).
-- LLM-generated flow artifact.
-- Deterministic `routeIntent` mapping (`confidence >= 0.9`).
-- Heuristic token scoring over registered flows.
-- Generated fallback flow.
-
-Output:
-- Flow artifact (`flow.json` by default).
-- Plan report (`plan-report.json`).
-- Flow/report pacing metadata:
-  - profile (`fast`/`standard`/`cinematic`)
-  - optional soft duration target
-  - computed duration multiplier
-  - optional emphasis directives
-
-5. `validate`
+4. `validate`
 
 ```bash
 studioflow validate --flow <path/to/flow.json|yaml>
@@ -93,7 +72,7 @@ Behavior:
 - Runs additional semantic checks (`validateFlowDefinition`).
 - Prints warnings and fails on validation errors.
 
-6. `doctor`
+5. `doctor`
 
 ```bash
 studioflow doctor
@@ -104,7 +83,7 @@ Behavior:
 - Checks AppleScript and keystroke automation access.
 - On failure, triggers permission prompts and opens system settings panes.
 
-7. `screenstudio-prep`
+6. `screenstudio-prep`
 
 ```bash
 studioflow screenstudio-prep [--app-name "Screen Studio"]
@@ -113,8 +92,9 @@ studioflow screenstudio-prep [--app-name "Screen Studio"]
 Behavior:
 - Ensures automation permissions.
 - Activates Screen Studio and verifies `Record` menu actions.
+- Intended for manual diagnostics; normal `run`/`demo` already performs this preflight.
 
-8. `list-flows`
+7. `list-flows`
 
 ```bash
 studioflow list-flows
@@ -123,58 +103,40 @@ studioflow list-flows
 Behavior:
 - Lists deterministic flows from registry.
 
-9. `list-candidates`
+8. `setup`
 
 ```bash
-studioflow list-candidates
-```
-
-Behavior:
-- Lists learned candidates with validation state, replay pass ratio, and selector stability score.
-
-10. `replay`
-
-```bash
-studioflow replay [--candidate <candidate-id|path>] [--attempts <n>]
-```
-
-Behavior:
-- Resolves candidate by ID, path, or latest candidate.
-- Re-validates candidate flow.
-- Computes selector resolvability score from source corpus.
-- Increments replay attempts/passes and updates validation state.
-
-11. `promote`
-
-```bash
-studioflow promote [--candidate <candidate-id|path>] [--flow-id <id>] [--min-passes <n>] [--min-stability <0..1>]
-```
-
-Behavior:
-- Enforces replay pass and stability thresholds.
-- Writes promoted flow into deterministic registry.
-- Writes promotion record and persists candidate state.
-
-12. `setup`
-
-```bash
-studioflow setup [--skip-skills] [--force-skills] [--skills-target <dir>]
+studioflow setup [--skip-skills] [--force-skills] [--skills-target <dir>] [--skills-agent <codex|claude|all>] [--codex-skills-target <dir>] [--claude-skills-target <dir>]
 ```
 
 Behavior:
 - Ensures Playwright Chromium is installed.
-- Installs bundled StudioFlow skills to `$CODEX_HOME/skills` or `~/.codex/skills`.
+- Installs bundled StudioFlow skills to both agents by default:
+  - Codex: `$CODEX_HOME/skills` or `~/.codex/skills`
+  - Claude: `$CLAUDE_HOME/skills` or `~/.claude/skills`
 - Runs non-blocking permission diagnostics and writes setup state.
 
-13. `install-skills`
+9. `install-skills`
 
 ```bash
-studioflow install-skills [--force] [--target <dir>]
+studioflow install-skills [--force] [--agent <codex|claude|all>] [--codex-target <dir>] [--claude-target <dir>] [--target <dir>]
 ```
 
 Behavior:
-- Copies bundled skills (`studioflow-cli-operator`, `webapp-flow-learner`) into Codex skills directory.
+- Copies bundled skills (`studioflow-cli`, `studioflow-investigate`) into both Codex and Claude skills directories by default.
 - Skips existing skills unless `--force` is set.
+- `--target` installs to one explicit directory (for custom environments); do not combine with agent-target flags.
+
+10. `config`
+
+```bash
+studioflow config show [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]
+studioflow config check [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]
+```
+
+Behavior:
+- `show`: prints effective runtime configuration and source for each value.
+- `check`: validates configuration and prints warnings if startup hints are incomplete.
 
 ## Exit behavior
 

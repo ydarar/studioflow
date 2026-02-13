@@ -14,6 +14,10 @@ export interface ChromiumInstallStatus {
   installedNow: boolean;
 }
 
+export interface StartBrowserOptions {
+  headless?: boolean;
+}
+
 async function runPlaywrightCli(args: string[]) {
   const require = createRequire(import.meta.url);
   const cliPath = require.resolve("playwright/cli");
@@ -56,8 +60,8 @@ export async function ensureChromiumInstalled(opts: { autoInstall?: boolean } = 
   return { ...postInstall, installedNow: postInstall.installed };
 }
 
-export async function startBrowser(baseUrl: string): Promise<BrowserSession> {
-  const headless = (process.env.STUDIOFLOW_HEADLESS ?? "false") === "true";
+export async function startBrowser(baseUrl: string, opts: StartBrowserOptions = {}): Promise<BrowserSession> {
+  const headless = opts.headless ?? (process.env.STUDIOFLOW_HEADLESS ?? "false") === "true";
   const browser = await chromium.launch({ headless });
   const context = await browser.newContext({ baseURL: baseUrl, viewport: { width: 1440, height: 960 } });
   const page = await context.newPage();

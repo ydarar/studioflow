@@ -9,15 +9,13 @@ const {
   executeStepMock,
   startRecordingMock,
   stopRecordingMock,
-  exportRecordingMock,
-  writeCandidateMock
+  exportRecordingMock
 } = vi.hoisted(() => ({
   startBrowserMock: vi.fn(),
   executeStepMock: vi.fn(),
   startRecordingMock: vi.fn(),
   stopRecordingMock: vi.fn(),
-  exportRecordingMock: vi.fn(),
-  writeCandidateMock: vi.fn()
+  exportRecordingMock: vi.fn()
 }));
 
 vi.mock("@studioflow/adapters-playwright", () => ({
@@ -29,10 +27,6 @@ vi.mock("@studioflow/adapters-screenstudio", () => ({
   startRecording: startRecordingMock,
   stopRecording: stopRecordingMock,
   exportRecording: exportRecordingMock
-}));
-
-vi.mock("@studioflow/flow-registry", () => ({
-  writeCandidate: writeCandidateMock
 }));
 
 function parseJsonLines(raw: string) {
@@ -71,7 +65,6 @@ describe.sequential("orchestrator engine", () => {
     startRecordingMock.mockReset();
     stopRecordingMock.mockReset();
     exportRecordingMock.mockReset();
-    writeCandidateMock.mockReset();
 
     tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-orchestrator-"));
     process.env = {
@@ -91,7 +84,6 @@ describe.sequential("orchestrator engine", () => {
     startRecordingMock.mockResolvedValue(undefined);
     stopRecordingMock.mockResolvedValue(undefined);
     exportRecordingMock.mockResolvedValue(undefined);
-    writeCandidateMock.mockResolvedValue(path.join(tempRoot, "candidate.json"));
   });
 
   afterEach(async () => {

@@ -9,8 +9,15 @@ export function getStudioflowDataDir() {
   return path.join(os.homedir(), ".studioflow");
 }
 
+function resolveAgentHome(envVar: string, defaultDir: string) {
+  const configured = process.env[envVar];
+  return configured && configured.trim() ? path.resolve(configured) : path.join(os.homedir(), defaultDir);
+}
+
 export function getCodexSkillsDir() {
-  const codexHome = process.env.CODEX_HOME;
-  const base = codexHome && codexHome.trim() ? path.resolve(codexHome) : path.join(os.homedir(), ".codex");
-  return path.join(base, "skills");
+  return path.join(resolveAgentHome("CODEX_HOME", ".codex"), "skills");
+}
+
+export function getClaudeSkillsDir() {
+  return path.join(resolveAgentHome("CLAUDE_HOME", ".claude"), "skills");
 }

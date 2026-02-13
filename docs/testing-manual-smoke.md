@@ -16,25 +16,34 @@ Do not use this doc for initial environment setup. Use `docs/day0-runbook.md` fo
 
 ## Smoke checklist
 
-1. Host prerequisites still pass.
+1. Agent artifact handoff is ready.
+
+```bash
+# generate artifacts/flow.json in Codex or Claude skill workflow
+# studioflow-investigate auto-generates context artifacts
+pnpm validate -- --flow artifacts/flow.json
+```
+
+2. Host prerequisites still pass.
 
 ```bash
 pnpm run doctor
+pnpm config check
 ```
 
-2. Screen Studio menu automation still passes.
+3. Optional targeted Screen Studio diagnostics (only when run preflight fails).
 
 ```bash
 pnpm screenstudio-prep
 ```
 
-3. Execute canonical smoke run.
+4. Execute canonical smoke run.
 
 ```bash
-pnpm demo -- "show onboarding and billing"
+pnpm demo -- --flow artifacts/flow.json --intent "onboarding and billing smoke"
 ```
 
-4. Validate artifacts and recorder output.
+5. Validate artifacts and recorder output.
 
 - `.runs/<run-id>/run.json` exists and reports `status: success`.
 - `.runs/<run-id>/events.jsonl` exists and contains completion events.
@@ -42,10 +51,17 @@ pnpm demo -- "show onboarding and billing"
 - Screen Studio created a new project in `~/Screen Studio Projects`.
 - Exported media exists in configured destination.
 
+6. Optional: open-intent clarification quality spot-check.
+
+- Run scenarios from `docs/studioflow-open-intent-tests.md` with `studioflow-investigate`.
+- Confirm question rounds are bounded (<=2) and flow output remains deterministic.
+
 ## Failure signals
 
 - `doctor` fails installation or permission checks.
 - `screenstudio-prep` fails to list expected `Record` actions.
+- `validate` fails for `artifacts/flow.json`.
+- Open-intent runs ask excessive questions or skip assertions in generated flow.
 - `run.json` reports `failed`.
 - No new Screen Studio project or exported file after run.
 

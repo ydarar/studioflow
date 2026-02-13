@@ -1,6 +1,6 @@
 # Flow Authoring
 
-Flow definitions are deterministic artifacts. Built-in flows live in `packages/flow-registry/flows`, and promoted/user flows are written to `~/.studioflow/flows` (or `$STUDIOFLOW_DATA_DIR/flows`).
+Flow definitions are deterministic artifacts. Built-in flows live in `packages/flow-registry/flows`, and user-managed flows can be stored at `~/.studioflow/flows` (or `$STUDIOFLOW_DATA_DIR/flows`).
 
 ## Flow schema
 
@@ -44,7 +44,7 @@ Step fields:
 
 1. `goto`
 - Uses `value` as route or URL.
-- Relative routes are resolved against `STUDIOFLOW_BASE_URL`.
+- Relative routes are resolved against the configured runtime `baseUrl`.
 
 2. `click`
 - Requires `target`.

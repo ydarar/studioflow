@@ -2,7 +2,7 @@
 
 This document describes every artifact StudioFlow emits and where it is stored.
 
-## Bootstrap and planning artifacts (`artifacts/`)
+## Bootstrap and discovery artifacts (`artifacts/`)
 
 1. `bootstrap.json`
 - Producer: `studioflow bootstrap`
@@ -27,27 +27,25 @@ This document describes every artifact StudioFlow emits and where it is stored.
   - `nodes`: route map
   - `edges`: inferred route transitions with confidence and evidence
 
-4. `flow.json`
-- Producer: `studioflow plan`
-- Schema: `flowDefinitionSchema`
-- Purpose: deterministic executable flow artifact.
-- Additional pacing metadata:
+## Input artifacts (agent-generated)
+
+1. `flow.json` (or `flow.yaml`)
+- Producer: agent workflow (Codex/Claude skill flow).
+- Schema: `flowDefinitionSchema`.
+- Purpose: deterministic executable flow artifact consumed by:
+  - `studioflow validate --flow ...`
+  - `studioflow run --flow ...`
+- Optional pacing metadata (if included in artifact):
   - `pacing.profile`
   - optional `pacing.targetDurationSec`
   - `pacing.predictedDurationSec`
   - `pacing.durationMultiplier`
   - optional `pacing.strictPacing`
   - optional emphasis directives
-
-5. `plan-report.json`
-- Producer: `studioflow plan`
-- Schema: `planReportSchema`
-- Key fields:
-  - `source` (`heuristic` or `llm-artifact`)
-  - `confidence`, `rationale`
-  - `selectedFlowId` or `generatedFlowId`
-  - optional `pacing` summary (profile, predicted duration, multiplier, emphasis)
-  - `needsClarification`, `clarifyingQuestion`
+- Recommended handoff metadata in assistant response (not schema fields):
+  - resolved intent anchors
+  - assumptions used for open-intent fallback
+  - confidence (`high|medium|low`)
 
 ## Run artifacts (`.runs/<run-id>`)
 
@@ -72,33 +70,13 @@ Files:
 - `screenshots/`
   - Step screenshots and failure screenshot (`failure.png`) on fatal errors.
 
-## Learning artifacts (`~/.studioflow/learned` or `$STUDIOFLOW_DATA_DIR/learned`)
-
-1. Candidate artifacts (`learned/candidates/*.json`)
-- Producer: orchestrator success path via `writeCandidate`.
-- Schema: `learningCandidateSchema`.
-- Key fields:
-  - `candidateId`, `sourceRunId`, `intent`
-  - `flow` (synthesized or persisted flow)
-  - `selectorStabilityScore`
-  - `replay.attempts` / `replay.passes`
-  - `validationState`
-
-2. Promotion records (`learned/promotions/*.json`)
-- Producer: `studioflow promote`.
-- Schema: `promotionRecordSchema`.
-- Key fields:
-  - candidate and promoted flow IDs
-  - replay stats at promotion time
-  - selector stability snapshot
-
 ## Deterministic flow registry
 
 - Built-in flow location: `packages/flow-registry/flows/*.yaml`
-- Promoted/user flow location: `~/.studioflow/flows/*.yaml` (or `$STUDIOFLOW_DATA_DIR/flows`)
+- User flow location: `~/.studioflow/flows/*.yaml` (or `$STUDIOFLOW_DATA_DIR/flows`)
 - Producers:
   - Hand-authored deterministic flows (built-in).
-  - `studioflow promote` for approved learned flows (user flow directory).
+  - User-managed deterministic flows (user flow directory).
 
 ## Event stream semantics
 
@@ -118,5 +96,4 @@ Failure runs also include:
 ## Retention guidance
 
 - Keep `.runs` for debugging and auditability in local/dev workflows.
-- Candidate and promotion artifacts should be retained when evaluating learning quality over time.
-- For CI or disk-constrained environments, prune old run folders while preserving promoted flows and promotion records.
+- For CI or disk-constrained environments, prune old run folders while preserving deterministic flow artifacts you rely on.

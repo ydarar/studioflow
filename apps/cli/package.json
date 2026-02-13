@@ -1,5 +1,5 @@
 {
-  "name": "@ydarar/studioflow",
+  "name": "studioflow",
   "version": "0.1.0",
   "private": false,
   "description": "Deterministic AI-assisted product demo automation CLI for Screen Studio workflows",
@@ -30,18 +30,15 @@
     "build": "node scripts/build.mjs",
     "prepack": "node scripts/sync-skills.mjs && node scripts/build.mjs",
     "demo": "tsx src/index.ts run",
+    "config": "tsx src/index.ts config",
     "setup": "tsx src/index.ts setup",
     "install-skills": "tsx src/index.ts install-skills",
     "discover": "tsx src/index.ts discover",
     "bootstrap": "tsx src/index.ts bootstrap",
     "screenstudio-prep": "tsx src/index.ts screenstudio-prep",
-    "plan": "tsx src/index.ts plan",
     "validate": "tsx src/index.ts validate",
-    "replay": "tsx src/index.ts replay",
-    "promote": "tsx src/index.ts promote",
     "doctor": "tsx src/index.ts doctor",
-    "list-flows": "tsx src/index.ts list-flows",
-    "list-candidates": "tsx src/index.ts list-candidates"
+    "list-flows": "tsx src/index.ts list-flows"
   },
   "dependencies": {
     "playwright": "^1.55.0"
@@ -54,8 +51,6 @@
     "@studioflow/contracts": "workspace:*",
     "@studioflow/flow-registry": "workspace:*",
     "@studioflow/orchestrator": "workspace:*",
-    "@studioflow/planner": "workspace:*",
-    "dotenv": "^16.4.7",
     "esbuild": "^0.25.11",
     "kleur": "^4.1.5",
     "tsx": "^4.20.5"

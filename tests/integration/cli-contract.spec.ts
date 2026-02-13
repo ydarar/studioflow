@@ -19,7 +19,7 @@ async function runCli(args: string[]) {
   try {
     const result = await execFileAsync(
       "pnpm",
-      ["--filter", "@ydarar/studioflow", "exec", "tsx", "src/index.ts", ...args],
+      ["--filter", "studioflow", "exec", "tsx", "src/index.ts", ...args],
       {
         cwd: rootDir,
         env: {
@@ -64,7 +64,7 @@ describe.sequential("cli command contracts", () => {
       scripts?: Record<string, string>;
     };
 
-    expect(pkg.scripts?.doctor).toBe("pnpm --filter @ydarar/studioflow run doctor");
+    expect(pkg.scripts?.doctor).toBe("pnpm --filter studioflow run doctor");
   });
 
   it("returns a clear error for unknown commands", async () => {
@@ -72,6 +72,40 @@ describe.sequential("cli command contracts", () => {
 
     expect(result.code).toBe(1);
     expect(result.stderr).toContain("StudioFlow error: Unknown command: definitely-not-a-command");
+  });
+
+  it("rejects intent-only run syntax", async () => {
+    const result = await runCli(["run", "show", "onboarding"]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("StudioFlow error: Usage: studioflow run --flow <path/to/flow.json|yaml>");
+  });
+
+  it("does not expose plan command", async () => {
+    const result = await runCli(["plan", "--intent", "show onboarding"]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("StudioFlow error: Unknown command: plan");
+  });
+
+  it("does not expose eval-intent command", async () => {
+    const result = await runCli(["eval-intent"]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("StudioFlow error: Unknown command: eval-intent");
+  });
+
+  it("prints resolved configuration in json mode", async () => {
+    const result = await runCli(["config", "show", "--json"]);
+
+    expect(result.code).toBe(0);
+    const payload = JSON.parse(result.stdout) as {
+      values: { baseUrl: string; healthPath: string };
+      sources: { baseUrl: string };
+    };
+    expect(payload.values.baseUrl).toBe("http://localhost:4173");
+    expect(payload.values.healthPath).toBe("/api/health");
+    expect(payload.sources.baseUrl).toBe("default");
   });
 
   it("lists deterministic flows from the flow registry", async () => {

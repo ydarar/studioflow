@@ -1,14 +1,15 @@
 import { spawn } from "node:child_process";
-import fs from "node:fs/promises";
 import kleur from "kleur";
-import { bootstrapReportSchema } from "@studioflow/contracts";
+import type { FlowDefinition } from "@studioflow/contracts";
 import { ensureChromiumInstalled } from "@studioflow/adapters-playwright";
-import { loadFlows, getFlowById, loadFlowFromFile } from "@studioflow/flow-registry";
-import { routeIntent } from "@studioflow/planner";
+import { loadFlowFromFile } from "@studioflow/flow-registry";
 import { runEngine } from "@studioflow/orchestrator";
 import { ensureAutomationPermissions } from "@studioflow/adapters-desktop";
+import type { ResolvedRuntimeConfig, RuntimeConfigOverrides } from "./config.js";
+import { resolveRuntimeConfig } from "./config.js";
 import { validateFlowDefinition } from "./flow-validation.js";
 import { resolveFromWorkspace, workspaceRoot } from "./path-utils.js";
+import { runScreenStudioPreflight } from "./screenstudio-prep.js";
 
 async function waitForHealth(healthUrl: string, timeoutMs = 45_000) {
   const start = Date.now();
@@ -28,19 +29,11 @@ async function waitForHealth(healthUrl: string, timeoutMs = 45_000) {
   throw new Error(`Timed out waiting for sample app health (${healthUrl}): ${String(lastError)}`);
 }
 
-async function loadBootstrapHints() {
-  const configured = process.env.STUDIOFLOW_BOOTSTRAP_REPORT ?? "artifacts/bootstrap.json";
-  const resolved = resolveFromWorkspace(configured);
-
-  try {
-    const raw = await fs.readFile(resolved, "utf8");
-    return bootstrapReportSchema.parse(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
-
-async function startAppLifecycle(baseUrl: string, startCommand: string, healthPath: string): Promise<() => Promise<void>> {
+async function startAppLifecycle(
+  baseUrl: string,
+  startCommand: string | undefined,
+  healthPath: string
+): Promise<() => Promise<void>> {
   const healthUrl = new URL(healthPath, baseUrl).toString();
 
   try {
@@ -48,6 +41,12 @@ async function startAppLifecycle(baseUrl: string, startCommand: string, healthPa
     return async () => {};
   } catch {
     // App not running yet, continue and launch it.
+  }
+
+  if (!startCommand) {
+    throw new Error(
+      `App is not healthy at ${healthUrl} and no start command is configured. Run \`studioflow bootstrap\` or pass --start-command.`
+    );
   }
 
   const child = spawn(startCommand, {
@@ -75,7 +74,12 @@ function formatDuration(start: number) {
   return `${((Date.now() - start) / 1000).toFixed(1)}s`;
 }
 
-async function runWithFlows(intentLabel: string, flowIds: string[], flows: Awaited<ReturnType<typeof loadFlowFromFile>>[]) {
+async function runWithFlows(
+  intentLabel: string,
+  flowIds: string[],
+  flows: FlowDefinition[],
+  runtime: ResolvedRuntimeConfig
+) {
   const chromium = await ensureChromiumInstalled({ autoInstall: true });
   if (!chromium.installed) {
     throw new Error("Playwright Chromium is not installed. Run `studioflow setup` and retry.");
@@ -85,6 +89,13 @@ async function runWithFlows(intentLabel: string, flowIds: string[], flows: Await
   }
 
   await ensureAutomationPermissions();
+  try {
+    const prep = await runScreenStudioPreflight({ ensurePermissions: false, quiet: true });
+    console.log(`Screen Studio preflight: ready (${prep.recordMenuItems.join(", ")})`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Screen Studio preflight failed: ${message}. Run \`studioflow screenstudio-prep\` for diagnostics.`);
+  }
 
   for (const flow of flows) {
     const validation = validateFlowDefinition(flow);
@@ -93,24 +104,27 @@ async function runWithFlows(intentLabel: string, flowIds: string[], flows: Await
     }
   }
 
-  const baseUrl = process.env.STUDIOFLOW_BASE_URL ?? "http://localhost:4173";
-  const bootstrap = await loadBootstrapHints();
-  const startCommand = process.env.STUDIOFLOW_START_COMMAND ?? bootstrap?.startCommand ?? "pnpm --filter @studioflow/sample-app dev";
-  const healthPath = process.env.STUDIOFLOW_HEALTH_PATH ?? bootstrap?.healthPath ?? "/api/health";
   const started = Date.now();
 
   console.log(kleur.bold("StudioFlow Run"));
   console.log(`Intent: ${intentLabel}`);
   console.log(`Mapped flows: ${flowIds.join(", ")}`);
-  console.log(`Start command: ${startCommand}`);
-  console.log(`Health path: ${healthPath}`);
+  console.log(`Base URL: ${runtime.values.baseUrl}`);
+  console.log(`Start command: ${runtime.values.startCommand ?? "(not configured)"}`);
+  console.log(`Health path: ${runtime.values.healthPath}`);
+  console.log(`Headless: ${String(runtime.values.headless)}`);
+  console.log(`Runs dir: ${runtime.values.runsDir}`);
 
+  const previousRunsDir = process.env.STUDIOFLOW_RUNS_DIR;
+  process.env.STUDIOFLOW_RUNS_DIR = runtime.values.runsDir;
   try {
     const result = await runEngine({
       intent: intentLabel,
       flows,
-      baseUrl,
-      startApp: async () => startAppLifecycle(baseUrl, startCommand, healthPath)
+      baseUrl: runtime.values.baseUrl,
+      headless: runtime.values.headless,
+      startApp: async () =>
+        startAppLifecycle(runtime.values.baseUrl, runtime.values.startCommand, runtime.values.healthPath)
     });
 
     console.log(kleur.green("Run completed successfully."));
@@ -124,33 +138,26 @@ async function runWithFlows(intentLabel: string, flowIds: string[], flows: Await
       console.error(kleur.yellow(`Artifacts: ${err.runDir}`));
     }
     throw error;
+  } finally {
+    if (previousRunsDir === undefined) {
+      delete process.env.STUDIOFLOW_RUNS_DIR;
+    } else {
+      process.env.STUDIOFLOW_RUNS_DIR = previousRunsDir;
+    }
   }
 }
 
-export async function runIntentCommand(intent: string) {
-  const knownFlows = await loadFlows();
-  if (knownFlows.length === 0) {
-    throw new Error("No flows registered.");
-  }
-
-  const mapping = await routeIntent(
-    intent,
-    knownFlows.map((f) => f.id)
-  );
-
-  const selectedFlows = await Promise.all(mapping.selectedFlowIds.map((id) => getFlowById(id)));
-
-  console.log(`Rationale: ${mapping.rationale} (confidence ${(mapping.confidence * 100).toFixed(0)}%)`);
-
-  await runWithFlows(intent, mapping.selectedFlowIds, selectedFlows);
-}
-
-export async function runFlowFileCommand(flowPath: string, sourceIntent = "artifact flow") {
+export async function runFlowFileCommand(
+  flowPath: string,
+  sourceIntent = "artifact flow",
+  overrides?: RuntimeConfigOverrides
+) {
   if (!flowPath) {
     throw new Error("Usage: studioflow run --flow <path/to/flow.json|yaml>");
   }
 
   const resolvedPath = resolveFromWorkspace(flowPath);
+  const runtime = await resolveRuntimeConfig(overrides);
   const flow = await loadFlowFromFile(resolvedPath);
-  await runWithFlows(sourceIntent, [flow.id], [flow]);
+  await runWithFlows(sourceIntent, [flow.id], [flow], runtime);
 }

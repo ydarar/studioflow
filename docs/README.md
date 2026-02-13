@@ -16,6 +16,7 @@ This folder is organized to keep one source of truth per topic.
 | --- | --- | --- | --- |
 | `docs/day0-runbook.md` | Operators | First-time setup and first successful run | Onboarding workflow changes |
 | `docs/testing-manual-smoke.md` | Release engineers | Pre-release manual validation checklist | Release gate or recorder behavior changes |
+| `docs/studioflow-open-intent-tests.md` | Release engineers, contributors | Open-intent clarification loop test matrix for skill-driven flow authoring | Intent-mapping workflow or skill clarification policy changes |
 | `docs/cli-reference.md` | Operators, contributors | Full CLI command and flag semantics | CLI command contracts change |
 | `docs/configuration.md` | Operators | Env vars, defaults, precedence | Env vars or defaults change |
 | `docs/flow-authoring.md` | Flow authors | Flow schema, actions, validation constraints | Flow schema or validation logic changes |
@@ -27,7 +28,7 @@ This folder is organized to keep one source of truth per topic.
 
 - New operator: `docs/day0-runbook.md` -> `docs/cli-reference.md` -> `docs/configuration.md`
 - Flow author: `docs/flow-authoring.md` -> `docs/artifacts-reference.md`
-- Contributor: `docs/architecture.md` -> `docs/low-level-design.md` -> `CONTRIBUTING.md`
+- Contributor: `docs/architecture.md` -> `docs/low-level-design.md` -> `docs/studioflow-open-intent-tests.md` -> `CONTRIBUTING.md`
 
 ## Documentation review checklist
 

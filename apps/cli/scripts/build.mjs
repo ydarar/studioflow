@@ -17,7 +17,6 @@ await build({
   external: ["playwright", "playwright/*"],
   alias: {
     "@studioflow/contracts": path.join(packageRoot, "../../packages/contracts/src/index.ts"),
-    "@studioflow/planner": path.join(packageRoot, "../../packages/planner/src/index.ts"),
     "@studioflow/flow-registry": path.join(packageRoot, "../../packages/flow-registry/src/index.ts"),
     "@studioflow/orchestrator": path.join(packageRoot, "../../packages/orchestrator/src/index.ts"),
     "@studioflow/artifacts": path.join(packageRoot, "../../packages/artifacts/src/index.ts"),

@@ -9,7 +9,7 @@ const sourceSkillsRoot = path.resolve(packageRoot, "../../skills");
 const targetSkillsRoot = path.join(packageRoot, "skills");
 const sourceFlowsRoot = path.resolve(packageRoot, "../../packages/flow-registry/flows");
 const targetFlowsRoot = path.join(packageRoot, "flows");
-const skillNames = ["studioflow-cli-operator", "webapp-flow-learner"];
+const skillNames = ["studioflow-cli", "studioflow-investigate"];
 const flowNames = ["billing.yaml", "onboarding.yaml", "onboarding_billing.yaml"];
 
 async function ensureSkillExists(skillName) {

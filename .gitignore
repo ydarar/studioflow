@@ -5,8 +5,9 @@ coverage
 .runs
 apps/cli/.runs
 apps/cli/skills
-artifacts
-apps/cli/artifacts
+/apps/cli/flows
+/artifacts
+/apps/cli/artifacts
 .env
 pnpm-lock.yaml
 playwright-report

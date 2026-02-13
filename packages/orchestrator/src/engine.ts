@@ -1,10 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { learningCandidateSchema, type FlowDefinition, type RunArtifactIndex } from "@studioflow/contracts";
+import type { FlowDefinition, RunArtifactIndex } from "@studioflow/contracts";
 import { appendJsonLine, createRunContext, writeJsonFile } from "@studioflow/artifacts";
 import { executeStep, startBrowser } from "@studioflow/adapters-playwright";
 import { exportRecording, startRecording, stopRecording } from "@studioflow/adapters-screenstudio";
-import { writeCandidate } from "@studioflow/flow-registry";
 import { withRetry } from "./retry-policy.js";
 import type { EngineState } from "./state-machine.js";
 
@@ -13,43 +12,7 @@ export interface RunInput {
   flows: FlowDefinition[];
   startApp: () => Promise<() => Promise<void>>;
   baseUrl: string;
-}
-
-function clamp(value: number, min = 0, max = 1) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function synthesizeCandidateFlow(intent: string, flows: FlowDefinition[], runId: string): FlowDefinition {
-  const suffix = runId.toLowerCase().replace(/[^a-z0-9-]/g, "");
-  return {
-    id: `learned-${suffix}`,
-    description: `Learned flow synthesized from run intent: ${intent}`,
-    tags: ["learned", ...flows.map((flow) => flow.id)],
-    preconditions: ["Verify app is running before execution"],
-    estimated_duration_sec: flows.reduce((sum, flow) => sum + (flow.estimated_duration_sec ?? 0), 0) || undefined,
-    steps: flows.flatMap((flow) =>
-      flow.steps.map((step) => ({
-        ...step,
-        id: `${flow.id}__${step.id}`
-      }))
-    )
-  };
-}
-
-function estimateSelectorStability(flow: FlowDefinition): number {
-  const selectorSteps = flow.steps.filter(
-    (step) =>
-      (step.action === "click" || step.action === "type" || step.action === "wait_for" || step.action === "assert_visible") &&
-      Boolean(step.target)
-  );
-
-  if (selectorSteps.length === 0) return 0.6;
-
-  const stableSelectors = selectorSteps.filter((step) =>
-    /\[data-testid=|data-testid|aria-label|role=|#/.test(step.target ?? "")
-  ).length;
-
-  return clamp(stableSelectors / selectorSteps.length);
+  headless?: boolean;
 }
 
 export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { runDir: string }> {
@@ -69,7 +32,7 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
   };
 
   let closeApp: (() => Promise<void>) | null = null;
-  const { browser, page } = await startBrowser(input.baseUrl);
+  const { browser, page } = await startBrowser(input.baseUrl, { headless: input.headless });
 
   try {
     state = "START_APP";
@@ -135,19 +98,6 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
       }
     });
     files.plan = planPath;
-
-    const synthesizedFlow = synthesizeCandidateFlow(input.intent, input.flows, run.runId);
-    const candidate = learningCandidateSchema.parse({
-      candidateId: `candidate-${run.runId}`,
-      sourceRunId: run.runId,
-      intent: input.intent,
-      flow: synthesizedFlow,
-      selectorStabilityScore: estimateSelectorStability(synthesizedFlow),
-      replay: { attempts: 0, passes: 0 },
-      validationState: "candidate"
-    });
-    const candidatePath = await writeCandidate(candidate.candidateId, candidate);
-    files.learningCandidate = candidatePath;
 
     state = "DONE";
     await emit("run.done", { runId: run.runId });

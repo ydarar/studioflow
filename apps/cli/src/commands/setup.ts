@@ -3,6 +3,7 @@ import path from "node:path";
 import kleur from "kleur";
 import { checkPermissions } from "@studioflow/adapters-desktop";
 import { ensureChromiumInstalled } from "@studioflow/adapters-playwright";
+import type { SkillsAgentSelection } from "./install-skills.js";
 import { installBundledSkills } from "./install-skills.js";
 import { getStudioflowDataDir } from "./runtime-paths.js";
 
@@ -10,6 +11,9 @@ export interface SetupOptions {
   skipSkills?: boolean;
   forceSkills?: boolean;
   skillsTargetDir?: string;
+  skillsAgent?: SkillsAgentSelection;
+  codexSkillsTargetDir?: string;
+  claudeSkillsTargetDir?: string;
 }
 
 function setupStatePath() {
@@ -39,9 +43,12 @@ export async function setupCommand(opts: SetupOptions = {}) {
   let skillsSummary:
     | {
         sourceDir: string;
-        targetDir: string;
-        installed: string[];
-        skipped: string[];
+        targets: Array<{
+          targetId: string;
+          targetDir: string;
+          installed: string[];
+          skipped: string[];
+        }>;
       }
     | undefined;
 
@@ -50,16 +57,22 @@ export async function setupCommand(opts: SetupOptions = {}) {
   } else {
     skillsSummary = await installBundledSkills({
       force: opts.forceSkills,
-      targetDir: opts.skillsTargetDir
+      targetDir: opts.skillsTargetDir,
+      agent: opts.skillsAgent,
+      codexTargetDir: opts.codexSkillsTargetDir,
+      claudeTargetDir: opts.claudeSkillsTargetDir
     });
 
     console.log(kleur.green("Skills synchronized."));
-    console.log(`- Target: ${skillsSummary.targetDir}`);
-    if (skillsSummary.installed.length > 0) {
-      console.log(`- Installed: ${skillsSummary.installed.join(", ")}`);
-    }
-    if (skillsSummary.skipped.length > 0) {
-      console.log(kleur.yellow(`- Skipped (already present): ${skillsSummary.skipped.join(", ")}`));
+    for (const target of skillsSummary.targets) {
+      const label = target.targetId === "custom" ? "custom" : target.targetId;
+      console.log(`- Target (${label}): ${target.targetDir}`);
+      if (target.installed.length > 0) {
+        console.log(`- Installed (${label}): ${target.installed.join(", ")}`);
+      }
+      if (target.skipped.length > 0) {
+        console.log(kleur.yellow(`- Skipped (${label}, already present): ${target.skipped.join(", ")}`));
+      }
     }
   }
 
@@ -90,9 +103,12 @@ export async function setupCommand(opts: SetupOptions = {}) {
     chromiumInstalledNow: chromium.installedNow,
     skills: skillsSummary
       ? {
-          targetDir: skillsSummary.targetDir,
-          installed: skillsSummary.installed,
-          skipped: skillsSummary.skipped
+          targets: skillsSummary.targets.map((target) => ({
+            targetId: target.targetId,
+            targetDir: target.targetDir,
+            installed: target.installed,
+            skipped: target.skipped
+          }))
         }
       : { skipped: true }
   });

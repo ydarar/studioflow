@@ -1,20 +1,17 @@
 #!/usr/bin/env node
-import "dotenv/config";
 import kleur from "kleur";
-import { runFlowFileCommand, runIntentCommand } from "./commands/run.js";
+import { runFlowFileCommand } from "./commands/run.js";
 import { listFlowsCommand } from "./commands/list-flows.js";
 import { doctorCommand } from "./commands/doctor.js";
-import { listCandidatesCommand } from "./commands/list-candidates.js";
 import { discoverCommand } from "./commands/discover.js";
-import { planCommand } from "./commands/plan.js";
 import { validateCommand } from "./commands/validate.js";
 import { bootstrapCommand } from "./commands/bootstrap.js";
-import { replayCommand } from "./commands/replay.js";
-import { promoteCommand } from "./commands/promote.js";
 import { screenstudioPrepCommand } from "./commands/screenstudio-prep.js";
 import { setupCommand } from "./commands/setup.js";
+import type { SkillsAgentSelection } from "./commands/install-skills.js";
 import { installSkillsCommand } from "./commands/install-skills.js";
-import type { PacingProfile } from "@studioflow/contracts";
+import type { RuntimeConfigOverrides } from "./commands/config.js";
+import { configCheckCommand, configShowCommand } from "./commands/config.js";
 
 function readFlag(args: string[], flag: string) {
   const index = args.indexOf(flag);
@@ -22,22 +19,45 @@ function readFlag(args: string[], flag: string) {
   return args[index + 1];
 }
 
-function removeFlagPair(args: string[], flag: string) {
-  const index = args.indexOf(flag);
-  if (index === -1) return args;
-  const copy = [...args];
-  copy.splice(index, 2);
-  return copy;
-}
-
 function hasFlag(args: string[], flag: string) {
   return args.includes(flag);
 }
 
-function parsePacingProfile(raw?: string): PacingProfile | undefined {
-  if (!raw) return undefined;
-  if (raw === "fast" || raw === "standard" || raw === "cinematic") return raw;
-  throw new Error("Invalid --pacing-profile. Expected one of: fast, standard, cinematic.");
+function parseBoolean(raw: string, flag: string) {
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  throw new Error(`Invalid ${flag} value: ${raw}. Expected true or false.`);
+}
+
+function readFlagValue(args: string[], flag: string) {
+  const index = args.indexOf(flag);
+  if (index === -1) return undefined;
+  const value = args[index + 1];
+  if (!value || value.startsWith("--")) {
+    throw new Error(`Flag ${flag} requires a value.`);
+  }
+  return value;
+}
+
+function parseRuntimeConfigOverrides(args: string[]): RuntimeConfigOverrides {
+  const headlessRaw = readFlagValue(args, "--headless");
+
+  return {
+    baseUrl: readFlagValue(args, "--base-url"),
+    startCommand: readFlagValue(args, "--start-command"),
+    healthPath: readFlagValue(args, "--health-path"),
+    bootstrapReportPath: readFlagValue(args, "--bootstrap-report"),
+    runsDir: readFlagValue(args, "--runs-dir"),
+    headless: headlessRaw ? parseBoolean(headlessRaw, "--headless") : undefined
+  };
+}
+
+function parseSkillsAgent(raw: string | undefined, flag: string): SkillsAgentSelection | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === "codex" || raw === "claude" || raw === "all") {
+    return raw;
+  }
+  throw new Error(`Invalid ${flag} value: ${raw}. Expected codex, claude, or all.`);
 }
 
 async function main() {
@@ -47,19 +67,37 @@ async function main() {
   try {
     if (command === "run" || command === "demo") {
       const flowPath = readFlag(normalizedArgs, "--flow");
-      if (flowPath) {
-        const sourceIntent = readFlag(normalizedArgs, "--intent") ?? "artifact flow";
-        await runFlowFileCommand(flowPath, sourceIntent);
+      if (!flowPath) {
+        throw new Error(
+          'Usage: studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]'
+        );
+      }
+
+      const sourceIntent = readFlag(normalizedArgs, "--intent") ?? "artifact flow";
+      const runtimeOverrides = parseRuntimeConfigOverrides(normalizedArgs);
+      await runFlowFileCommand(flowPath, sourceIntent, runtimeOverrides);
+      return;
+    }
+
+    if (command === "config") {
+      const subcommand = normalizedArgs[0] && !normalizedArgs[0].startsWith("--") ? normalizedArgs[0] : "show";
+      const commandArgs = normalizedArgs[0] === subcommand ? normalizedArgs.slice(1) : normalizedArgs;
+      const json = hasFlag(commandArgs, "--json");
+      const runtimeOverrides = parseRuntimeConfigOverrides(commandArgs);
+
+      if (subcommand === "show") {
+        await configShowCommand({ json, overrides: runtimeOverrides });
         return;
       }
 
-      const intentArgs = removeFlagPair(removeFlagPair(normalizedArgs, "--flow"), "--intent");
-      const intent = intentArgs.join(" ").trim();
-      if (!intent) {
-        throw new Error("Usage: studioflow run \"<intent>\" OR studioflow run --flow <path>");
+      if (subcommand === "check") {
+        await configCheckCommand({ json, overrides: runtimeOverrides });
+        return;
       }
-      await runIntentCommand(intent);
-      return;
+
+      throw new Error(
+        "Usage: studioflow config <show|check> [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]"
+      );
     }
 
     if (command === "discover") {
@@ -84,7 +122,10 @@ async function main() {
       await setupCommand({
         skipSkills: hasFlag(normalizedArgs, "--skip-skills"),
         forceSkills: hasFlag(normalizedArgs, "--force-skills"),
-        skillsTargetDir: readFlag(normalizedArgs, "--skills-target")
+        skillsTargetDir: readFlag(normalizedArgs, "--skills-target"),
+        skillsAgent: parseSkillsAgent(readFlag(normalizedArgs, "--skills-agent"), "--skills-agent"),
+        codexSkillsTargetDir: readFlag(normalizedArgs, "--codex-skills-target"),
+        claudeSkillsTargetDir: readFlag(normalizedArgs, "--claude-skills-target")
       });
       return;
     }
@@ -92,42 +133,10 @@ async function main() {
     if (command === "install-skills") {
       await installSkillsCommand({
         force: hasFlag(normalizedArgs, "--force"),
-        targetDir: readFlag(normalizedArgs, "--target")
-      });
-      return;
-    }
-
-    if (command === "plan") {
-      const intent = readFlag(normalizedArgs, "--intent") ?? normalizedArgs.filter((a) => !a.startsWith("--")).join(" ").trim();
-      if (!intent) {
-        throw new Error(
-          "Usage: studioflow plan --intent \"<intent>\" [--report artifacts/structure-report.json] [--out artifacts/flow.json] [--llm-plan artifacts/llm-plan.json] [--plan-report artifacts/plan-report.json] [--pacing-profile fast|standard|cinematic] [--target-duration-sec <int>] [--emphasis <path/to/emphasis.json>]"
-        );
-      }
-      const reportPath = readFlag(normalizedArgs, "--report") ?? "artifacts/structure-report.json";
-      const outPath = readFlag(normalizedArgs, "--out") ?? "artifacts/flow.json";
-      const llmPlanPath = readFlag(normalizedArgs, "--llm-plan");
-      const planReportOut = readFlag(normalizedArgs, "--plan-report");
-      const pacingProfile = parsePacingProfile(readFlag(normalizedArgs, "--pacing-profile"));
-      const targetDurationRaw = readFlag(normalizedArgs, "--target-duration-sec");
-      let targetDurationSec: number | undefined;
-      if (targetDurationRaw) {
-        const parsedTarget = Number(targetDurationRaw);
-        if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
-          throw new Error("Invalid --target-duration-sec. Expected a positive number.");
-        }
-        targetDurationSec = parsedTarget;
-      }
-      const emphasisPath = readFlag(normalizedArgs, "--emphasis");
-      await planCommand({
-        intent,
-        reportPath,
-        outPath,
-        llmPlanPath,
-        planReportOut,
-        pacingProfile,
-        targetDurationSec: targetDurationSec ? Math.round(targetDurationSec) : undefined,
-        emphasisPath
+        targetDir: readFlag(normalizedArgs, "--target"),
+        agent: parseSkillsAgent(readFlag(normalizedArgs, "--agent"), "--agent"),
+        codexTargetDir: readFlag(normalizedArgs, "--codex-target"),
+        claudeTargetDir: readFlag(normalizedArgs, "--claude-target")
       });
       return;
     }
@@ -145,41 +154,6 @@ async function main() {
 
     if (command === "doctor") {
       await doctorCommand();
-      return;
-    }
-
-    if (command === "list-candidates") {
-      await listCandidatesCommand();
-      return;
-    }
-
-    if (command === "replay") {
-      const candidateRef = readFlag(normalizedArgs, "--candidate") ?? normalizedArgs.find((arg) => !arg.startsWith("--"));
-      const attemptsRaw = readFlag(normalizedArgs, "--attempts");
-      const attempts = attemptsRaw ? Number(attemptsRaw) : undefined;
-      if (attemptsRaw && Number.isNaN(attempts)) {
-        throw new Error("Usage: studioflow replay [--candidate <candidateId|path>] [--attempts <number>]");
-      }
-      await replayCommand({ candidateRef, attempts });
-      return;
-    }
-
-    if (command === "promote") {
-      const candidateRef = readFlag(normalizedArgs, "--candidate") ?? normalizedArgs.find((arg) => !arg.startsWith("--"));
-      const flowId = readFlag(normalizedArgs, "--flow-id");
-      const minPassesRaw = readFlag(normalizedArgs, "--min-passes");
-      const minStabilityRaw = readFlag(normalizedArgs, "--min-stability");
-      const minPasses = minPassesRaw ? Number(minPassesRaw) : undefined;
-      const minStability = minStabilityRaw ? Number(minStabilityRaw) : undefined;
-
-      if (minPassesRaw && Number.isNaN(minPasses)) {
-        throw new Error("Usage: studioflow promote [--candidate <candidateId|path>] [--flow-id <id>] [--min-passes <number>] [--min-stability <0..1>]");
-      }
-      if (minStabilityRaw && Number.isNaN(minStability)) {
-        throw new Error("Usage: studioflow promote [--candidate <candidateId|path>] [--flow-id <id>] [--min-passes <number>] [--min-stability <0..1>]");
-      }
-
-      await promoteCommand({ candidateRef, flowId, minPasses, minStability });
       return;
     }
 
