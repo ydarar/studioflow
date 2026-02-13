@@ -1,6 +1,10 @@
-# StudioFlow CLI
+# StudioFlow
 
-StudioFlow turns natural-language demo intent into deterministic UI run artifacts and executes them through Screen Studio.
+StudioFlow turns a plain-language demo request into a deterministic recorded run.
+
+This package includes:
+- a CLI runtime (`studioflow`) for deterministic artifact execution
+- bundled agent skills for Codex and Claude (`studioflow-investigate`, `studioflow-cli`)
 
 ## Requirements
 
@@ -22,11 +26,10 @@ npm install -g studioflow
 studioflow setup
 ```
 
-Bundled skills include:
-- `studioflow-investigate` (intent -> deterministic artifacts, including `artifacts/flow.json`)
-- `studioflow-cli` (artifact execution workflow)
+## Default Workflow (Agent-First)
 
-## Quick Start
+You should not need to manually invoke multiple skills or manually run CLI commands for a normal demo request.
+Open Codex or Claude in your project and describe the demo you want.
 
 1. Start your agent from the project root.
 
@@ -46,37 +49,31 @@ claude
 
 If your launcher command differs, start your usual Codex or Claude session in this repo root.
 
-2. Trigger `studioflow-investigate` to generate `artifacts/flow.json`.
+2. Ask for the demo in plain language.
 
-Paste this prompt:
+Example:
 
 ```text
-Use StudioFlow skill studioflow-investigate.
-Intent: "Record a demo for onboarding and billing."
-Generate artifacts/flow.json for this repo.
-If intent details are missing, ask concise follow-up questions before authoring the flow.
+Record a demo for onboarding and billing.
 ```
 
-`studioflow-investigate` automatically collects project context artifacts before creating the flow.
-
-3. Validate and run:
-
-```bash
-studioflow validate --flow artifacts/flow.json
-studioflow demo --flow artifacts/flow.json --intent "onboarding and billing demo"
-```
+3. StudioFlow skills + CLI handle the rest:
+- investigate the codebase
+- generate deterministic artifacts (`artifacts/flow.json`, related context artifacts)
+- validate the flow
+- execute recording through the CLI runtime
 
 `run`/`demo` automatically performs Screen Studio preflight checks. Use manual prep only for troubleshooting.
 Headed runs auto-open a maximized browser window for cleaner recording composition.
 Runs do not auto-export by default; include `recorder_export` in flow steps only when export is explicitly needed.
 
-## Optional: Trigger Runtime Skill In Agent
+## Advanced Manual Mode (Optional)
 
-If you want the agent to drive execution too, use:
+If you want to run the runtime yourself:
 
-```text
-Use StudioFlow skill studioflow-cli.
-Validate artifacts/flow.json, run the demo, and report run artifact paths.
+```bash
+studioflow validate --flow artifacts/flow.json
+studioflow demo --flow artifacts/flow.json --intent "onboarding and billing demo"
 ```
 
 ## Documentation

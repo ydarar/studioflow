@@ -74,6 +74,20 @@ describe.sequential("cli command contracts", () => {
     expect(result.stderr).toContain("StudioFlow error: Unknown command: definitely-not-a-command");
   });
 
+  it("prints CLI version for --version and -v", async () => {
+    const pkg = JSON.parse(await fs.readFile(path.resolve(rootDir, "apps/cli/package.json"), "utf8")) as {
+      version: string;
+    };
+
+    const longResult = await runCli(["--version"]);
+    expect(longResult.code).toBe(0);
+    expect(longResult.stdout.trim()).toBe(pkg.version);
+
+    const shortResult = await runCli(["-v"]);
+    expect(shortResult.code).toBe(0);
+    expect(shortResult.stdout.trim()).toBe(pkg.version);
+  });
+
   it("rejects intent-only run syntax", async () => {
     const result = await runCli(["run", "show", "onboarding"]);
 

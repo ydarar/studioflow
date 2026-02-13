@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import kleur from "kleur";
 import { runFlowFileCommand } from "./commands/run.js";
 import { listFlowsCommand } from "./commands/list-flows.js";
@@ -12,6 +15,18 @@ import type { SkillsAgentSelection } from "./commands/install-skills.js";
 import { installSkillsCommand } from "./commands/install-skills.js";
 import type { RuntimeConfigOverrides } from "./commands/config.js";
 import { configCheckCommand, configShowCommand } from "./commands/config.js";
+
+let cachedVersion: string | null = null;
+
+async function cliVersion() {
+  if (cachedVersion) return cachedVersion;
+  const dirname = path.dirname(fileURLToPath(import.meta.url));
+  const packageJsonPath = path.resolve(dirname, "../package.json");
+  const raw = await fs.readFile(packageJsonPath, "utf8");
+  const parsed = JSON.parse(raw) as { version?: string };
+  cachedVersion = parsed.version ?? "0.0.0";
+  return cachedVersion;
+}
 
 function readFlag(args: string[], flag: string) {
   const index = args.indexOf(flag);
@@ -65,6 +80,11 @@ async function main() {
   const normalizedArgs = args.filter((arg) => arg !== "--");
 
   try {
+    if (command === "version" || command === "--version" || command === "-v") {
+      console.log(await cliVersion());
+      return;
+    }
+
     if (command === "run" || command === "demo") {
       const flowPath = readFlag(normalizedArgs, "--flow");
       if (!flowPath) {

@@ -140,6 +140,17 @@ Behavior:
 - `show`: prints effective runtime configuration and source for each value.
 - `check`: validates configuration and prints warnings if startup hints are incomplete.
 
+11. `version` / `--version` / `-v`
+
+```bash
+studioflow version
+studioflow --version
+studioflow -v
+```
+
+Behavior:
+- Prints the installed CLI package version.
+
 ## Exit behavior
 
 - Unknown command or command failure prints `StudioFlow error: <message>` and exits with code `1`.
