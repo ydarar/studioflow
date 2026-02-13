@@ -1,0 +1,16 @@
+{
+  "name": "@demopilot/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@demopilot/adapters-playwright": "workspace:*",
+    "@demopilot/adapters-screenstudio": "workspace:*",
+    "@demopilot/artifacts": "workspace:*",
+    "@demopilot/contracts": "workspace:*",
+    "@demopilot/flow-registry": "workspace:*"
+  }
+}

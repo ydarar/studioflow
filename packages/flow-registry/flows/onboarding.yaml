@@ -1,0 +1,26 @@
+id: onboarding
+description: Complete onboarding form and continue to billing
+tags:
+  - onboarding
+  - setup
+estimated_duration_sec: 25
+steps:
+  - id: goto-home
+    action: goto
+    value: /
+  - id: click-onboarding
+    action: click
+    target: '[data-testid="go-onboarding"]'
+  - id: assert-onboarding
+    action: assert_visible
+    target: '[data-testid="onboarding-title"]'
+  - id: fill-company
+    action: type
+    target: '[data-testid="company-name-input"]'
+    value: Acme Inc
+  - id: continue
+    action: click
+    target: '[data-testid="complete-onboarding"]'
+  - id: assert-billing
+    action: assert_visible
+    target: '[data-testid="billing-title"]'

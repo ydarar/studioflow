@@ -1,0 +1,13 @@
+{
+  "name": "@demopilot/adapters-playwright",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@demopilot/contracts": "workspace:*",
+    "playwright": "^1.55.0"
+  }
+}

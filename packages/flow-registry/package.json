@@ -1,0 +1,13 @@
+{
+  "name": "@demopilot/flow-registry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@demopilot/contracts": "workspace:*",
+    "yaml": "^2.7.0"
+  }
+}

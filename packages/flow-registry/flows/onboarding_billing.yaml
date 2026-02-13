@@ -1,0 +1,30 @@
+id: onboarding_billing
+description: Run onboarding and billing as a single showcase flow
+tags:
+  - onboarding
+  - billing
+  - full-demo
+estimated_duration_sec: 45
+steps:
+  - id: goto-home
+    action: goto
+    value: /
+  - id: click-onboarding
+    action: click
+    target: '[data-testid="go-onboarding"]'
+  - id: fill-company
+    action: type
+    target: '[data-testid="company-name-input"]'
+    value: Acme Incorporated
+  - id: continue
+    action: click
+    target: '[data-testid="complete-onboarding"]'
+  - id: choose-plan
+    action: click
+    target: '[data-testid="plan-pro"]'
+  - id: assert-success
+    action: assert_visible
+    target: '[data-testid="success-title"]'
+  - id: screenshot-success
+    action: screenshot
+    value: success-screen

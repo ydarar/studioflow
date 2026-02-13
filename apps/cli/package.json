@@ -1,0 +1,33 @@
+{
+  "name": "@demopilot/cli",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "demopilot": "src/index.ts"
+  },
+  "scripts": {
+    "demo": "tsx src/index.ts run",
+    "discover": "tsx src/index.ts discover",
+    "bootstrap": "tsx src/index.ts bootstrap",
+    "screenstudio-prep": "tsx src/index.ts screenstudio-prep",
+    "plan": "tsx src/index.ts plan",
+    "validate": "tsx src/index.ts validate",
+    "replay": "tsx src/index.ts replay",
+    "promote": "tsx src/index.ts promote",
+    "doctor": "tsx src/index.ts doctor",
+    "list-flows": "tsx src/index.ts list-flows",
+    "list-candidates": "tsx src/index.ts list-candidates"
+  },
+  "dependencies": {
+    "@demopilot/adapters-desktop": "workspace:*",
+    "@demopilot/adapters-playwright": "workspace:*",
+    "@demopilot/adapters-screenstudio": "workspace:*",
+    "@demopilot/artifacts": "workspace:*",
+    "@demopilot/contracts": "workspace:*",
+    "@demopilot/flow-registry": "workspace:*",
+    "@demopilot/orchestrator": "workspace:*",
+    "@demopilot/planner": "workspace:*",
+    "dotenv": "^16.4.7",
+    "kleur": "^4.1.5"
+  }
+}

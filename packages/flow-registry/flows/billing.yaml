@@ -1,0 +1,21 @@
+id: billing
+description: Open billing page and pick a plan
+tags:
+  - billing
+estimated_duration_sec: 20
+steps:
+  - id: goto-billing
+    action: goto
+    value: /billing
+  - id: assert-billing-title
+    action: assert_visible
+    target: '[data-testid="billing-title"]'
+  - id: choose-plan
+    action: click
+    target: '[data-testid="plan-pro"]'
+  - id: assert-success
+    action: assert_visible
+    target: '[data-testid="success-title"]'
+  - id: assert-plan
+    action: assert_text
+    value: "Selected plan: pro"

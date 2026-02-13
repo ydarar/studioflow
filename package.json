@@ -1,0 +1,30 @@
+{
+  "name": "demopilot",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Deterministic AI-assisted product demo automation with Screen Studio",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev:sample": "pnpm --filter @demopilot/sample-app run dev",
+    "demo": "pnpm --filter @demopilot/cli run demo --",
+    "discover": "pnpm --filter @demopilot/cli run discover --",
+    "bootstrap": "pnpm --filter @demopilot/cli run bootstrap --",
+    "screenstudio-prep": "pnpm --filter @demopilot/cli run screenstudio-prep --",
+    "plan": "pnpm --filter @demopilot/cli run plan --",
+    "validate": "pnpm --filter @demopilot/cli run validate --",
+    "replay": "pnpm --filter @demopilot/cli run replay --",
+    "promote": "pnpm --filter @demopilot/cli run promote --",
+    "doctor": "pnpm --filter @demopilot/cli run doctor",
+    "list-flows": "pnpm --filter @demopilot/cli run list-flows",
+    "list-candidates": "pnpm --filter @demopilot/cli run list-candidates",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "test": "vitest run",
+    "test:ci": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
