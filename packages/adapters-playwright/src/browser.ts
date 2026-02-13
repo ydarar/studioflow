@@ -16,6 +16,34 @@ export interface ChromiumInstallStatus {
 
 export interface StartBrowserOptions {
   headless?: boolean;
+  fullscreen?: boolean;
+}
+
+const defaultViewport = { width: 1440, height: 960 };
+
+function parseBooleanEnv(value: string | undefined): boolean | undefined {
+  if (value === undefined) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") return true;
+  if (normalized === "false" || normalized === "0" || normalized === "no") return false;
+  return undefined;
+}
+
+export interface ResolvedBrowserLaunch {
+  headless: boolean;
+  launchArgs: string[] | undefined;
+  viewport: { width: number; height: number } | null;
+}
+
+export function resolveBrowserLaunch(opts: StartBrowserOptions = {}, env: NodeJS.ProcessEnv = process.env): ResolvedBrowserLaunch {
+  const headless = opts.headless ?? parseBooleanEnv(env.STUDIOFLOW_HEADLESS) ?? false;
+  const fullscreen = opts.fullscreen ?? parseBooleanEnv(env.STUDIOFLOW_BROWSER_FULLSCREEN) ?? !headless;
+  const useFullscreen = !headless && fullscreen;
+  return {
+    headless,
+    launchArgs: useFullscreen ? ["--start-maximized"] : undefined,
+    viewport: useFullscreen ? null : defaultViewport
+  };
 }
 
 async function runPlaywrightCli(args: string[]) {
@@ -61,9 +89,16 @@ export async function ensureChromiumInstalled(opts: { autoInstall?: boolean } = 
 }
 
 export async function startBrowser(baseUrl: string, opts: StartBrowserOptions = {}): Promise<BrowserSession> {
-  const headless = opts.headless ?? (process.env.STUDIOFLOW_HEADLESS ?? "false") === "true";
-  const browser = await chromium.launch({ headless });
-  const context = await browser.newContext({ baseURL: baseUrl, viewport: { width: 1440, height: 960 } });
+  const resolved = resolveBrowserLaunch(opts);
+
+  const browser = await chromium.launch({
+    headless: resolved.headless,
+    ...(resolved.launchArgs ? { args: resolved.launchArgs } : {})
+  });
+  const context = await browser.newContext({
+    baseURL: baseUrl,
+    viewport: resolved.viewport
+  });
   const page = await context.newPage();
   return { browser, page };
 }

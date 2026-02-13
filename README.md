@@ -67,6 +67,7 @@ studioflow demo --flow artifacts/flow.json --intent "onboarding and billing demo
 ```
 
 `run`/`demo` automatically performs Screen Studio preflight checks. Use manual prep only for troubleshooting.
+Headed runs auto-open a maximized browser window for cleaner recording composition.
 
 ## Optional: Trigger Runtime Skill In Agent
 

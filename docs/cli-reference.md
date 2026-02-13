@@ -34,6 +34,7 @@ Behavior:
 - Auto-installs Playwright Chromium on first run if missing.
 - Ensures automation permissions.
 - Runs Screen Studio Record-menu preflight before execution.
+- In non-headless mode, launches browser maximized for cleaner capture framing.
 - Validates provided flow artifact before execution.
 - Resolves runtime config from flags, config files, bootstrap report, and defaults.
 - Reuses an already-healthy app when possible; if app is not healthy and no `startCommand` resolves, run fails with guidance.

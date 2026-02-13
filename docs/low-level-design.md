@@ -85,6 +85,8 @@ Execution lifecycle:
 
 1. `createRunContext()` creates run directory and `events.jsonl`.
 2. `startBrowser(baseUrl)` creates browser/page session.
+   - Headed mode defaults to a maximized window (`--start-maximized`, `viewport: null`) for capture framing.
+   - Headless mode and explicit fullscreen disable use fixed `1440x960` viewport.
 3. App lifecycle starts via injected `startApp` callback.
 4. Recorder starts; browser tab is brought back to front.
 5. Each flow step executes with retry wrapper.

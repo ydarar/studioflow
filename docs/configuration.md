@@ -81,7 +81,7 @@ These override file/bootstrap/default values for that invocation only.
 These are optional advanced controls still read directly from environment:
 
 - `STUDIOFLOW_DATA_DIR` / `STUDIOFLOW_HOME`
-  - Data root for learned flows/candidates/promotions and setup state.
+  - Data root for user flow files, user config, and setup state.
   - Default: `~/.studioflow`
 
 - `CODEX_HOME`
@@ -109,6 +109,10 @@ These are optional advanced controls still read directly from environment:
 - `STUDIOFLOW_TYPING_DELAY_MS`
 - `STUDIOFLOW_PACING_ADJUSTMENT`
 - `STUDIOFLOW_PACING_JITTER`
+- `STUDIOFLOW_BROWSER_FULLSCREEN`
+  - Controls headed browser launch mode.
+  - Default: `true` when `headless` is `false`, otherwise ignored.
+  - Set to `false` to force fixed `1440x960` viewport in headed runs.
 
 - `SAMPLE_APP_PORT` (sample app only)
 
