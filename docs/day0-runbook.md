@@ -20,7 +20,7 @@ For release validation, use `docs/testing-manual-smoke.md`.
 ## Step 1: verify host and Screen Studio access
 
 ```bash
-pnpm setup
+pnpm run setup
 pnpm run doctor
 pnpm config check
 ```
@@ -67,7 +67,8 @@ pnpm demo -- --flow artifacts/flow.json --intent "demo billing and showcase comp
 
 Pass criteria:
 - Run completes successfully and prints run artifact directory.
-- `.runs/<run-id>/run.json` has `status: success`.
+- `<runsDir>/<run-id>/run.json` has `status: success`.
+- Export only runs when flow includes `recorder_export`.
 
 ## Common blockers
 

@@ -18,6 +18,7 @@ export interface RunInput {
 export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { runDir: string }> {
   const run = await createRunContext();
   let state: EngineState = "INIT";
+  const shouldExport = input.flows.some((flow) => flow.steps.some((step) => step.action === "recorder_export"));
   const files: Record<string, string> = {
     events: run.eventsFile
   };
@@ -75,10 +76,12 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
     await stopRecording();
     await emit("recorder.stop.done");
 
-    state = "EXPORT";
-    await emit("recorder.export.begin");
-    await exportRecording();
-    await emit("recorder.export.done");
+    if (shouldExport) {
+      state = "EXPORT";
+      await emit("recorder.export.begin");
+      await exportRecording();
+      await emit("recorder.export.done");
+    }
 
     state = "VERIFY_ARTIFACTS";
     const planPath = path.join(run.runDir, "plan.json");

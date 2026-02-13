@@ -91,7 +91,7 @@ describe.sequential("orchestrator engine", () => {
     await fs.rm(tempRoot, { recursive: true, force: true });
   });
 
-  it("retries failed steps and writes success artifacts with expected state events", async () => {
+  it("retries failed steps and writes success artifacts without export by default", async () => {
     let attempts = 0;
     executeStepMock.mockImplementation(async () => {
       attempts += 1;
@@ -113,7 +113,7 @@ describe.sequential("orchestrator engine", () => {
     expect(executeStepMock).toHaveBeenCalledTimes(2);
     expect(startRecordingMock).toHaveBeenCalledTimes(1);
     expect(stopRecordingMock).toHaveBeenCalledTimes(1);
-    expect(exportRecordingMock).toHaveBeenCalledTimes(1);
+    expect(exportRecordingMock).not.toHaveBeenCalled();
     expect(closeApp).toHaveBeenCalledTimes(1);
 
     const eventsRaw = await fs.readFile(result.files.events, "utf8");
@@ -130,8 +130,6 @@ describe.sequential("orchestrator engine", () => {
       "flow.done",
       "recorder.stop.begin",
       "recorder.stop.done",
-      "recorder.export.begin",
-      "recorder.export.done",
       "run.done"
     ]);
 
@@ -139,6 +137,25 @@ describe.sequential("orchestrator engine", () => {
     expect(runJsonPath).toBeTruthy();
     const runJson = JSON.parse(await fs.readFile(runJsonPath, "utf8")) as { status: string };
     expect(runJson.status).toBe("success");
+  });
+
+  it("exports only when at least one flow includes recorder_export", async () => {
+    executeStepMock.mockResolvedValue(undefined);
+    const closeApp = vi.fn(async () => {});
+    const { runEngine } = await import("../../packages/orchestrator/src/engine.ts");
+
+    const result = await runEngine({
+      intent: "billing flow",
+      flows: [makeFlow({ action: "recorder_export" })],
+      baseUrl: "http://localhost:4173",
+      startApp: async () => closeApp
+    });
+
+    expect(exportRecordingMock).toHaveBeenCalledTimes(1);
+    const eventsRaw = await fs.readFile(result.files.events, "utf8");
+    const events = parseJsonLines(eventsRaw).map((item) => item.event);
+    expect(events).toContain("recorder.export.begin");
+    expect(events).toContain("recorder.export.done");
   });
 
   it("captures failure artifacts and returns enriched errors on fatal step failures", async () => {

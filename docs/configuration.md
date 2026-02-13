@@ -34,7 +34,7 @@ Supported keys in `.studioflow/config.json` and `~/.studioflow/config.json`:
 
 - `runsDir` (string)
   - Example: `".runs"`
-  - Default: `.runs`
+  - Default: `~/.studioflow/runs` (or `$STUDIOFLOW_DATA_DIR/runs`)
 
 - `bootstrapReport` (string path)
   - Example: `"artifacts/bootstrap.json"`
@@ -101,18 +101,33 @@ These are optional advanced controls still read directly from environment:
 - `SCREENSTUDIO_POST_STOP_DELAY_MS`
 - `SCREENSTUDIO_EXPORT_DIALOG_CONFIRM_DELAY_MS`
 - `SCREENSTUDIO_EXPORT_DELAY_MS`
+  - Used only when a run explicitly requests export via `recorder_export`.
 
 - `STUDIOFLOW_RENDER_CURSOR`
 - `STUDIOFLOW_CURSOR_MOVE_MS`
 - `STUDIOFLOW_CURSOR_HIGHLIGHT_MS`
 - `STUDIOFLOW_REALISTIC_TYPING`
 - `STUDIOFLOW_TYPING_DELAY_MS`
+- `STUDIOFLOW_CLICK_PULSE_MS`
+- `STUDIOFLOW_STEP_PRE_DELAY_MS`
+- `STUDIOFLOW_STEP_POST_DELAY_MS`
+- `STUDIOFLOW_STEP_DWELL_MS`
 - `STUDIOFLOW_PACING_ADJUSTMENT`
 - `STUDIOFLOW_PACING_JITTER`
 - `STUDIOFLOW_BROWSER_FULLSCREEN`
   - Controls headed browser launch mode.
   - Default: `true` when `headless` is `false`, otherwise ignored.
   - Set to `false` to force fixed `1440x960` viewport in headed runs.
+
+Default pacing profile (when step-level pacing fields are not provided):
+
+- `STUDIOFLOW_CURSOR_MOVE_MS=430`
+- `STUDIOFLOW_CURSOR_HIGHLIGHT_MS=170`
+- `STUDIOFLOW_TYPING_DELAY_MS=55`
+- `STUDIOFLOW_CLICK_PULSE_MS=220`
+- `STUDIOFLOW_STEP_PRE_DELAY_MS=90`
+- `STUDIOFLOW_STEP_POST_DELAY_MS=130`
+- `STUDIOFLOW_STEP_DWELL_MS=180`
 
 - `SAMPLE_APP_PORT` (sample app only)
 

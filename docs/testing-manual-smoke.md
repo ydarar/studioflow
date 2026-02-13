@@ -45,11 +45,11 @@ pnpm demo -- --flow artifacts/flow.json --intent "onboarding and billing smoke"
 
 5. Validate artifacts and recorder output.
 
-- `.runs/<run-id>/run.json` exists and reports `status: success`.
-- `.runs/<run-id>/events.jsonl` exists and contains completion events.
-- `.runs/<run-id>/screenshots/` contains expected screenshots.
+- `<runsDir>/<run-id>/run.json` exists and reports `status: success`.
+- `<runsDir>/<run-id>/events.jsonl` exists and contains completion events.
+- `<runsDir>/<run-id>/screenshots/` contains expected screenshots.
 - Screen Studio created a new project in `~/Screen Studio Projects`.
-- Exported media exists in configured destination.
+- Exported media exists only when the flow explicitly includes `recorder_export`.
 
 6. Optional: open-intent clarification quality spot-check.
 
@@ -63,7 +63,8 @@ pnpm demo -- --flow artifacts/flow.json --intent "onboarding and billing smoke"
 - `validate` fails for `artifacts/flow.json`.
 - Open-intent runs ask excessive questions or skip assertions in generated flow.
 - `run.json` reports `failed`.
-- No new Screen Studio project or exported file after run.
+- No new Screen Studio project after run.
+- Exported file missing when flow explicitly requests `recorder_export`.
 
 ## Triage pointers
 

@@ -221,7 +221,7 @@ export async function resolveRuntimeConfig(overrides: RuntimeConfigOverrides = {
       { value: project.config.runsDir, source: "project-config" },
       { value: user.config.runsDir, source: "user-config" }
     ],
-    ".runs"
+    path.join(getStudioflowDataDir(), "runs")
   );
 
   validateBaseUrl(baseUrl.value);

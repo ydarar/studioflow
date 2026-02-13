@@ -28,11 +28,11 @@ StudioFlow is a deterministic demo automation runtime that executes provided flo
 
 5. Adapters
 - Browser adapter (`packages/adapters-playwright`): Playwright launch + step execution.
-- Recorder adapter (`packages/adapters-screenstudio`): Screen Studio menu automation and export trigger.
+- Recorder adapter (`packages/adapters-screenstudio`): Screen Studio menu automation and optional export trigger.
 - Desktop adapter (`packages/adapters-desktop`): AppleScript execution and permission checks.
 
 6. Artifact writer (`packages/artifacts`)
-- Creates `.runs/<run-id>` structure.
+- Creates `<runsDir>/<run-id>` structure.
 - Writes `events.jsonl`, `plan.json`, `run.json`, and screenshots.
 
 7. Agent skill workflow (Codex/Claude skills)
@@ -43,20 +43,20 @@ StudioFlow is a deterministic demo automation runtime that executes provided flo
 
 1. Operator runs `studioflow run --flow <file>`.
 2. CLI resolves flows and validates each flow definition.
-3. Engine creates run context (`.runs/<run-id>`) and launches browser.
+3. Engine creates run context (`<runsDir>/<run-id>`) and launches browser.
 4. Engine starts app lifecycle (reuse existing app if health endpoint is already healthy).
 5. Engine starts Screen Studio recording.
 6. Engine executes every step in every selected flow with per-step retry policy.
-7. Engine stops recorder and triggers export.
+7. Engine stops recorder and only exports when flow steps explicitly request `recorder_export`.
 8. Engine writes run artifacts (`plan.json`, `run.json`, `events.jsonl`).
 
 ## Engine state machine
 
-`INIT -> START_APP -> START_RECORDER -> RUN_FLOW -> STOP_RECORDER -> EXPORT -> VERIFY_ARTIFACTS -> DONE`
+`INIT -> START_APP -> START_RECORDER -> RUN_FLOW -> STOP_RECORDER -> (optional EXPORT) -> VERIFY_ARTIFACTS -> DONE`
 
 Failure path:
 - Any unrecoverable error transitions to `FAILED`.
-- A failure screenshot is captured to `.runs/<run-id>/screenshots/failure.png`.
+- A failure screenshot is captured to `<runsDir>/<run-id>/screenshots/failure.png`.
 - `run.json` is still written with status `failed`.
 
 ## Determinism and safety controls

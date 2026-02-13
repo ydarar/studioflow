@@ -1,7 +1,13 @@
+import os from "node:os";
 import path from "node:path";
 
 export function getRunsRoot() {
-  const configured = process.env.STUDIOFLOW_RUNS_DIR || ".runs";
+  const dataDir = process.env.STUDIOFLOW_DATA_DIR ?? process.env.STUDIOFLOW_HOME;
+  const defaultRunsDir =
+    dataDir && dataDir.trim()
+      ? path.join(path.resolve(dataDir), "runs")
+      : path.join(os.homedir(), ".studioflow", "runs");
+  const configured = process.env.STUDIOFLOW_RUNS_DIR || defaultRunsDir;
   if (path.isAbsolute(configured)) {
     return configured;
   }

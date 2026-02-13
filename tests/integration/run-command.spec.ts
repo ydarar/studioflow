@@ -220,11 +220,12 @@ describe.sequential("run command orchestration", () => {
     });
 
     const logged = logSpy.mock.calls.flat().map(String).join("\n");
+    const expectedRunsDir = path.join(process.env.STUDIOFLOW_DATA_DIR ?? "", "runs");
     expect(logged).toContain("Base URL: http://localhost:4173");
     expect(logged).toContain("Start command: (not configured)");
     expect(logged).toContain("Health path: /api/health");
     expect(logged).toContain("Headless: false");
-    expect(logged).toContain("Runs dir: .runs");
+    expect(logged).toContain(`Runs dir: ${expectedRunsDir}`);
   });
 
   it("fails fast on invalid flow definitions before orchestrator execution", async () => {

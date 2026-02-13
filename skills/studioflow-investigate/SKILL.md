@@ -43,6 +43,7 @@ Clarification loop:
 - Max 2 rounds.
 - Ask 1-3 questions per round (adaptive; only missing high-impact fields).
 - Question priority: `done_assertion` -> `target_route` -> `user_goal` -> optional inputs/scope.
+- Capture optional run-feel preferences when provided (for example: `fast`, `balanced`, `cinematic`, or explicit timing overrides).
 - If host supports structured question-card requests, emit payloads from `references/question-card-spec.md`.
 - If structured cards are not supported, ask equivalent plain-language questions.
 - Track known/missing fields using `references/clarification-state.md`.
@@ -54,6 +55,7 @@ Rules for authored flow:
 - Prefer stable selectors (`data-testid`).
 - Include clear step IDs and assertions at key transitions.
 - Include optional pacing fields when useful for recording quality.
+- Add `recorder_export` only when the user explicitly asks for export at run completion.
 - If clarification remains incomplete after 2 rounds, generate best-effort flow with explicit assumptions.
 
 6. Validate candidate flow:
@@ -67,6 +69,7 @@ pnpm validate -- --flow artifacts/flow.json
 8. Emit deterministic runtime handoff for `studioflow-cli`.
 
 Write `artifacts/studioflow-cli-handoff.json` using `references/cli-handoff-spec.md`.
+- Include `runtimePacing` in handoff when run-feel preferences or timing overrides are known.
 
 9. Hand off execution to `studioflow-cli` immediately.
 

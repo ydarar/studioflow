@@ -68,11 +68,12 @@ Step fields:
 - Waits until selector becomes visible.
 
 7. `screenshot`
-- Writes screenshot to `.runs/<run-id>/screenshots/<value>.png`.
+- Writes screenshot to `<runsDir>/<run-id>/screenshots/<value>.png`.
 - If `value` is missing, falls back to `<step-id>.png`.
 
 8. Recorder actions
-- `recorder_start`, `recorder_stop`, `recorder_export` are no-ops in Playwright step execution because recorder lifecycle is orchestrator-driven.
+- `recorder_start`, `recorder_stop`, and `recorder_export` are no-ops in Playwright step execution because recorder lifecycle is orchestrator-driven.
+- `recorder_export` acts as an explicit export marker for the orchestrator. Without it, runs do not auto-export.
 
 ## Validation rules
 

@@ -10,7 +10,7 @@
 
 ## Browser executable failures
 - Error: Playwright Chromium not installed
-- Action: `studioflow setup` (or `pnpm setup` in this repo)
+- Action: `studioflow setup` (or `pnpm run setup` in this repo)
 
 ## Artifact path checks
-- Run artifacts under `.runs/<run-id>/`
+- Run artifacts under `<runsDir>/<run-id>/`

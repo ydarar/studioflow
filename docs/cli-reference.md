@@ -35,6 +35,7 @@ Behavior:
 - Ensures automation permissions.
 - Runs Screen Studio Record-menu preflight before execution.
 - In non-headless mode, launches browser maximized for cleaner capture framing.
+- Does not auto-export on completion; export runs only when flow includes explicit `recorder_export`.
 - Validates provided flow artifact before execution.
 - Resolves runtime config from flags, config files, bootstrap report, and defaults.
 - Reuses an already-healthy app when possible; if app is not healthy and no `startCommand` resolves, run fails with guidance.

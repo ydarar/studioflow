@@ -47,7 +47,7 @@ This document describes every artifact StudioFlow emits and where it is stored.
   - assumptions used for open-intent fallback
   - confidence (`high|medium|low`)
 
-## Run artifacts (`.runs/<run-id>`)
+## Run artifacts (`<runsDir>/<run-id>`)
 
 Produced by orchestrator run engine.
 
@@ -86,8 +86,11 @@ Common event names in successful runs:
 - `recorder.start.begin`, `recorder.start.done`
 - `flow.begin`, `step.begin`, `step.done`, `flow.done`
 - `recorder.stop.begin`, `recorder.stop.done`
-- `recorder.export.begin`, `recorder.export.done`
 - `run.done`
+
+Export events are emitted only when at least one selected flow step uses `recorder_export`:
+
+- `recorder.export.begin`, `recorder.export.done`
 
 Failure runs also include:
 
@@ -95,5 +98,6 @@ Failure runs also include:
 
 ## Retention guidance
 
-- Keep `.runs` for debugging and auditability in local/dev workflows.
+- Default `runsDir` is `~/.studioflow/runs` (or `$STUDIOFLOW_DATA_DIR/runs`).
+- Keep run artifacts for debugging and auditability in local/dev workflows.
 - For CI or disk-constrained environments, prune old run folders while preserving deterministic flow artifacts you rely on.

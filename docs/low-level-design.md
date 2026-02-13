@@ -90,7 +90,7 @@ Execution lifecycle:
 3. App lifecycle starts via injected `startApp` callback.
 4. Recorder starts; browser tab is brought back to front.
 5. Each flow step executes with retry wrapper.
-6. Recorder stop/export sequence runs.
+6. Recorder stop sequence runs; export runs only when at least one flow step is `recorder_export`.
 7. `plan.json` is written.
 8. `run.json` is finalized.
 

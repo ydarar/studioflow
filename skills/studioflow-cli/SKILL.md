@@ -13,6 +13,7 @@ Run validated artifacts through deterministic execution.
 - `artifacts/studioflow-cli-handoff.json`
 
 If handoff exists, use it as the source of truth for `flowPath`, `intentSummary`, `baseUrl`, `startCommand`, and `healthPath`.
+If present, also consume `runtimePacing` from handoff for runtime timing env values.
 
 1. Confirm artifact presence:
 - `artifacts/flow.json`
@@ -24,7 +25,7 @@ If handoff exists, use it as the source of truth for `flowPath`, `intentSummary`
 2. Run doctor checks:
 
 ```bash
-pnpm setup
+pnpm run setup
 pnpm run doctor
 ```
 
@@ -43,13 +44,15 @@ pnpm validate -- --flow artifacts/flow.json
 4. Execute recording run from artifact:
 
 ```bash
-pnpm demo -- --flow <flowPath> --intent "<intent-summary>" --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>
+STUDIOFLOW_CURSOR_MOVE_MS=<cursorMoveMs> STUDIOFLOW_CURSOR_HIGHLIGHT_MS=<cursorHighlightMs> STUDIOFLOW_TYPING_DELAY_MS=<typingDelayMs> STUDIOFLOW_CLICK_PULSE_MS=<clickPulseMs> STUDIOFLOW_STEP_PRE_DELAY_MS=<stepPreDelayMs> STUDIOFLOW_STEP_POST_DELAY_MS=<stepPostDelayMs> STUDIOFLOW_STEP_DWELL_MS=<stepDwellMs> pnpm demo -- --flow <flowPath> --intent "<intent-summary>" --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>
 ```
 
+Only set timing env vars that are provided (or implied by selected run-feel profile) in handoff.
+
 5. Inspect outputs:
-- `.runs/<run-id>/run.json`
-- `.runs/<run-id>/events.jsonl`
-- `.runs/<run-id>/screenshots/*`
+- `<runsDir>/<run-id>/run.json`
+- `<runsDir>/<run-id>/events.jsonl`
+- `<runsDir>/<run-id>/screenshots/*`
 
 6. If run fails, inspect error step in `events.jsonl`, patch flow selectors/pacing, and rerun from step 3.
 

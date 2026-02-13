@@ -6,8 +6,8 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function boolEnv(name: string, fallback: boolean) {
-  const raw = process.env[name];
+function boolEnv(name: string, fallback: boolean, env: NodeJS.ProcessEnv = process.env) {
+  const raw = env[name];
   if (!raw) return fallback;
   const normalized = raw.trim().toLowerCase();
   if (["1", "true", "yes", "on"].includes(normalized)) return true;
@@ -15,21 +15,44 @@ function boolEnv(name: string, fallback: boolean) {
   return fallback;
 }
 
-function intEnv(name: string, fallback: number) {
-  const raw = process.env[name];
+function intEnv(name: string, fallback: number, env: NodeJS.ProcessEnv = process.env) {
+  const raw = env[name];
   if (!raw) return fallback;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-const renderCursorOverlay = boolEnv("STUDIOFLOW_RENDER_CURSOR", true);
-const defaultCursorMoveMs = intEnv("STUDIOFLOW_CURSOR_MOVE_MS", 320);
-const defaultCursorHighlightMs = intEnv("STUDIOFLOW_CURSOR_HIGHLIGHT_MS", 120);
-const realisticTyping = boolEnv("STUDIOFLOW_REALISTIC_TYPING", true);
-const typingDelayMs = Math.max(0, intEnv("STUDIOFLOW_TYPING_DELAY_MS", 35));
-const pacingAdjustmentEnabled = boolEnv("STUDIOFLOW_PACING_ADJUSTMENT", true);
-const pacingJitterEnabled = boolEnv("STUDIOFLOW_PACING_JITTER", true);
 const maxDelayMs = 60_000;
+
+export interface RuntimePacingDefaults {
+  renderCursorOverlay: boolean;
+  cursorMoveMs: number;
+  cursorHighlightMs: number;
+  realisticTyping: boolean;
+  typingDelayMs: number;
+  clickPulseMs: number;
+  stepPreDelayMs: number;
+  stepPostDelayMs: number;
+  stepDwellMs: number;
+  pacingAdjustmentEnabled: boolean;
+  pacingJitterEnabled: boolean;
+}
+
+export function resolveRuntimePacingDefaults(env: NodeJS.ProcessEnv = process.env): RuntimePacingDefaults {
+  return {
+    renderCursorOverlay: boolEnv("STUDIOFLOW_RENDER_CURSOR", true, env),
+    cursorMoveMs: Math.max(0, intEnv("STUDIOFLOW_CURSOR_MOVE_MS", 430, env)),
+    cursorHighlightMs: Math.max(0, intEnv("STUDIOFLOW_CURSOR_HIGHLIGHT_MS", 170, env)),
+    realisticTyping: boolEnv("STUDIOFLOW_REALISTIC_TYPING", true, env),
+    typingDelayMs: Math.max(0, intEnv("STUDIOFLOW_TYPING_DELAY_MS", 55, env)),
+    clickPulseMs: Math.max(0, intEnv("STUDIOFLOW_CLICK_PULSE_MS", 220, env)),
+    stepPreDelayMs: Math.max(0, intEnv("STUDIOFLOW_STEP_PRE_DELAY_MS", 90, env)),
+    stepPostDelayMs: Math.max(0, intEnv("STUDIOFLOW_STEP_POST_DELAY_MS", 130, env)),
+    stepDwellMs: Math.max(0, intEnv("STUDIOFLOW_STEP_DWELL_MS", 180, env)),
+    pacingAdjustmentEnabled: boolEnv("STUDIOFLOW_PACING_ADJUSTMENT", true, env),
+    pacingJitterEnabled: boolEnv("STUDIOFLOW_PACING_JITTER", true, env)
+  };
+}
 
 export interface StepExecutionContext {
   pacingMultiplier?: number;
@@ -42,7 +65,7 @@ interface Point {
   y: number;
 }
 
-const cursorOverlaySetupScript = `
+const cursorOverlaySetupScript = (clickPulseMs: number) => `
 (() => {
   const win = window;
   if (win.__studioflowCursor) return;
@@ -77,7 +100,7 @@ const cursorOverlaySetupScript = `
         transform: scale(0.65);
       }
       #studioflow-cursor.studioflow-cursor-pulse::after {
-        animation: studioflow-cursor-pulse 300ms ease-out;
+        animation: studioflow-cursor-pulse ${Math.max(0, clickPulseMs)}ms ease-out;
       }
       @keyframes studioflow-cursor-pulse {
         0% { opacity: 0.9; transform: scale(0.55); }
@@ -155,17 +178,18 @@ function jitterFactor(seed: string) {
 function resolvePacedDelay(
   rawMs: number | undefined,
   context: StepExecutionContext,
+  runtime: RuntimePacingDefaults,
   channel: string,
   allowJitter = true
 ) {
   if (!rawMs || rawMs <= 0) return 0;
 
   let value = rawMs;
-  const multiplier = pacingAdjustmentEnabled ? context.pacingMultiplier ?? 1 : 1;
+  const multiplier = runtime.pacingAdjustmentEnabled ? context.pacingMultiplier ?? 1 : 1;
   value *= multiplier;
 
   const shouldApplyJitter =
-    allowJitter && pacingJitterEnabled && !context.strictPacing && Boolean(context.jitterSeed);
+    allowJitter && runtime.pacingJitterEnabled && !context.strictPacing && Boolean(context.jitterSeed);
 
   if (shouldApplyJitter) {
     value *= 1 + jitterFactor(`${context.jitterSeed}:${channel}`);
@@ -174,9 +198,9 @@ function resolvePacedDelay(
   return Math.max(0, Math.min(maxDelayMs, Math.round(value)));
 }
 
-async function ensureCursorOverlay(page: Page) {
-  if (!renderCursorOverlay) return;
-  await page.evaluate(cursorOverlaySetupScript);
+async function ensureCursorOverlay(page: Page, runtime: RuntimePacingDefaults) {
+  if (!runtime.renderCursorOverlay) return;
+  await page.evaluate(cursorOverlaySetupScript(runtime.clickPulseMs));
 }
 
 async function getTargetCenter(page: Page, target: string): Promise<Point | null> {
@@ -185,22 +209,22 @@ async function getTargetCenter(page: Page, target: string): Promise<Point | null
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-async function moveCursor(page: Page, point: Point, durationMs: number) {
+async function moveCursor(page: Page, point: Point, durationMs: number, runtime: RuntimePacingDefaults) {
   await page.mouse.move(point.x, point.y, { steps: Math.max(8, Math.floor(durationMs / 16)) });
-  if (renderCursorOverlay) {
-    await ensureCursorOverlay(page);
+  if (runtime.renderCursorOverlay) {
+    await ensureCursorOverlay(page, runtime);
     await page.evaluate(cursorMoveScript(point, durationMs));
   }
 }
 
-async function clickPulse(page: Page) {
-  if (!renderCursorOverlay) return;
-  await ensureCursorOverlay(page);
+async function clickPulse(page: Page, runtime: RuntimePacingDefaults) {
+  if (!runtime.renderCursorOverlay) return;
+  await ensureCursorOverlay(page, runtime);
   await page.evaluate(cursorClickPulseScript);
 }
 
-async function applyPreStepPacing(page: Page, step: FlowStep, context: StepExecutionContext) {
-  const preDelay = resolvePacedDelay(step.preDelayMs, context, "pre");
+async function applyPreStepPacing(page: Page, step: FlowStep, context: StepExecutionContext, runtime: RuntimePacingDefaults) {
+  const preDelay = resolvePacedDelay(step.preDelayMs ?? runtime.stepPreDelayMs, context, runtime, "pre");
   if (preDelay > 0) {
     await wait(preDelay);
   }
@@ -211,23 +235,23 @@ async function applyPreStepPacing(page: Page, step: FlowStep, context: StepExecu
   const center = await getTargetCenter(page, step.target);
   if (!center) return;
 
-  const moveMs = resolvePacedDelay(step.mouseMoveMs ?? defaultCursorMoveMs, context, "move");
+  const moveMs = resolvePacedDelay(step.mouseMoveMs ?? runtime.cursorMoveMs, context, runtime, "move");
   if (moveMs > 0) {
-    await moveCursor(page, center, moveMs);
+    await moveCursor(page, center, moveMs, runtime);
   }
 
-  const highlightMs = resolvePacedDelay(step.highlightMs ?? defaultCursorHighlightMs, context, "highlight");
+  const highlightMs = resolvePacedDelay(step.highlightMs ?? runtime.cursorHighlightMs, context, runtime, "highlight");
   if (highlightMs > 0) {
     await wait(highlightMs);
   }
 }
 
-async function applyPostStepPacing(step: FlowStep, context: StepExecutionContext) {
-  const postDelay = resolvePacedDelay(step.postDelayMs, context, "post");
+async function applyPostStepPacing(step: FlowStep, context: StepExecutionContext, runtime: RuntimePacingDefaults) {
+  const postDelay = resolvePacedDelay(step.postDelayMs ?? runtime.stepPostDelayMs, context, runtime, "post");
   if (postDelay > 0) {
     await wait(postDelay);
   }
-  const dwellDelay = resolvePacedDelay(step.dwellMs, context, "dwell");
+  const dwellDelay = resolvePacedDelay(step.dwellMs ?? runtime.stepDwellMs, context, runtime, "dwell");
   if (dwellDelay > 0) {
     await wait(dwellDelay);
   }
@@ -241,49 +265,50 @@ export async function executeStep(
   context: StepExecutionContext = {}
 ) {
   const timeout = step.timeoutMs ?? 6000;
-  await applyPreStepPacing(page, step, context);
+  const runtime = resolveRuntimePacingDefaults();
+  await applyPreStepPacing(page, step, context, runtime);
 
   if (step.action === "goto") {
     const target = step.value ?? "/";
     const isAbsolute = /^https?:\/\//.test(target);
     await page.goto(isAbsolute ? target : new URL(target, baseUrl).toString(), { timeout });
-    await applyPostStepPacing(step, context);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 
   if (step.action === "click") {
     if (!step.target) throw new Error(`Step ${step.id} missing target`);
     await page.locator(step.target).first().click({ timeout });
-    await clickPulse(page);
-    await applyPostStepPacing(step, context);
+    await clickPulse(page, runtime);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 
   if (step.action === "type") {
     if (!step.target) throw new Error(`Step ${step.id} missing target`);
     const locator = page.locator(step.target).first();
-    if (realisticTyping) {
+    if (runtime.realisticTyping) {
       await locator.click({ timeout });
-      await clickPulse(page);
+      await clickPulse(page, runtime);
       await locator.fill("", { timeout });
-      const effectiveTypingDelay = resolvePacedDelay(typingDelayMs, context, "typing", false);
+      const effectiveTypingDelay = resolvePacedDelay(runtime.typingDelayMs, context, runtime, "typing", false);
       await page.keyboard.type(step.value ?? "", { delay: effectiveTypingDelay });
     } else {
       await locator.fill(step.value ?? "", { timeout });
     }
-    await applyPostStepPacing(step, context);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 
   if (step.action === "wait_for") {
     if (step.target) {
       await page.locator(step.target).first().waitFor({ state: "visible", timeout });
-      await applyPostStepPacing(step, context);
+      await applyPostStepPacing(step, context, runtime);
       return;
     }
     if (step.value) {
       await page.getByText(step.value).first().waitFor({ timeout });
-      await applyPostStepPacing(step, context);
+      await applyPostStepPacing(step, context, runtime);
       return;
     }
     throw new Error(`Step ${step.id} requires target or value for wait_for`);
@@ -292,26 +317,26 @@ export async function executeStep(
   if (step.action === "assert_text") {
     if (!step.value) throw new Error(`Step ${step.id} missing value`);
     await assertText(page, step.value, timeout);
-    await applyPostStepPacing(step, context);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 
   if (step.action === "assert_visible") {
     if (!step.target) throw new Error(`Step ${step.id} missing target`);
     await assertVisible(page, step.target, timeout);
-    await applyPostStepPacing(step, context);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 
   if (step.action === "screenshot") {
     const name = step.value ?? `${step.id}.png`;
     await page.screenshot({ path: `${runDir}/screenshots/${name}.png`, fullPage: true });
-    await applyPostStepPacing(step, context);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 
   if (["recorder_start", "recorder_stop", "recorder_export"].includes(step.action)) {
-    await applyPostStepPacing(step, context);
+    await applyPostStepPacing(step, context, runtime);
     return;
   }
 

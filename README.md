@@ -68,6 +68,7 @@ studioflow demo --flow artifacts/flow.json --intent "onboarding and billing demo
 
 `run`/`demo` automatically performs Screen Studio preflight checks. Use manual prep only for troubleshooting.
 Headed runs auto-open a maximized browser window for cleaner recording composition.
+Runs do not auto-export by default; include `recorder_export` in flow steps only when export is explicitly needed.
 
 ## Optional: Trigger Runtime Skill In Agent
 

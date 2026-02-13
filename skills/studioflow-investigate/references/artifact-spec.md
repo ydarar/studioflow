@@ -32,6 +32,10 @@ Flow steps may include pacing fields:
 - dwellMs
 - narrativeCheckpoint
 
+Recorder note:
+- Include `recorder_export` only when user explicitly asks to export at run completion.
+- Without `recorder_export`, StudioFlow stops recording and completes the run without export.
+
 ## Open-intent fallback note
 
 When the user intent remains open after clarification rounds, the assistant should still generate deterministic `flow.json` and include assumptions + confidence in the response handoff.
