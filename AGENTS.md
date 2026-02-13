@@ -50,3 +50,11 @@ Examples:
 - `feat: add studioflow cli handoff artifact`
 - `fix: resolve headless browser launch regression`
 - `docs: simplify quickstart instructions`
+
+## Release Tagging (Required)
+
+Every npm publish must have a corresponding git tag for the exact published version.
+
+- Tag format: `v<version>` (example: `v0.1.1`)
+- Tag target: the exact commit that was published to npm
+- Publish is not complete until the matching tag exists
