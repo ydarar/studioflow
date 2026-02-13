@@ -1,89 +1,83 @@
-# StudioFlow
+# StudioFlow Monorepo
 
-StudioFlow turns natural-language demo intent into deterministic UI run artifacts.
+This repository contains the StudioFlow runtime, adapters, deterministic flow assets, sample apps, and agent skills used to turn natural-language demo intent into deterministic recorded runs.
 
-## Requirements
+If you are an end user installing from npm, use the CLI README:
+- `apps/cli/README.md`
 
-- macOS (Screen Studio automation)
-- Screen Studio installed
+## Repository Purpose
+
+StudioFlow's steel thread is:
+1. Agent interprets intent and authors deterministic artifact(s).
+2. CLI validates and executes those artifacts.
+3. Screen Studio records the run for review.
+
+This repo is optimized for developing and maintaining that runtime path.
+
+## Monorepo Layout
+
+- `apps/cli`
+  - Publishable npm package (`studioflow`)
+  - CLI entrypoint, command layer, packaging scripts
+- `packages/*`
+  - Internal runtime modules (contracts, orchestrator, adapters, artifact writer, flow registry)
+  - Treated as implementation details and bundled into CLI release artifact
+- `skills/*`
+  - Bundled Codex/Claude skills shipped by CLI setup/install flows
+- `docs/*`
+  - Canonical product and engineering docs
+- `apps/sample-app`, `apps/demo-lab`
+  - Local demo targets for deterministic flow development and testing
+- `tests/*`
+  - Integration/e2e verification for runtime behavior
+
+## Developer Quick Start
+
+Prerequisites:
 - Node.js 22+
+- pnpm 10+
+- macOS for Screen Studio integration paths
 
-## Install CLI
-
-```bash
-npm install -g studioflow
-```
-
-## Install Runtime + Skills
-
-`setup` installs Playwright Chromium, installs bundled skills for Codex and Claude, and checks permissions.
+Install and run checks:
 
 ```bash
-studioflow setup
+pnpm install
+pnpm run typecheck
+pnpm run test
 ```
 
-Bundled skills include:
-- `studioflow-investigate` (intent -> deterministic artifacts, including `artifacts/flow.json`)
-- `studioflow-cli` (artifact execution workflow)
-
-## Quick Start
-
-1. Start your agent from the project root.
-
-Codex:
+For local runtime validation:
 
 ```bash
-cd /path/to/your/project
-codex
+pnpm run setup
+pnpm run doctor
+pnpm demo -- --flow artifacts/flow.json --intent "local smoke"
 ```
 
-Claude Code:
+## Release Model
 
-```bash
-cd /path/to/your/project
-claude
-```
+- Public npm package: `studioflow` from `apps/cli`
+- Internal `@studioflow/*` workspace packages are private and bundled into the CLI build
+- Every npm publish requires a matching git tag (`v<version>`) on the exact published commit
 
-If your launcher command differs, start your usual Codex or Claude session in this repo root.
+## Documentation Index
 
-2. Trigger `studioflow-investigate` to generate `artifacts/flow.json`.
+Start here for docs ownership and reading order:
+- `docs/README.md`
 
-Paste this prompt:
+Key docs:
+- `docs/day0-runbook.md`
+- `docs/cli-reference.md`
+- `docs/configuration.md`
+- `docs/flow-authoring.md`
+- `docs/artifacts-reference.md`
+- `docs/architecture.md`
+- `docs/low-level-design.md`
+- `docs/testing-manual-smoke.md`
+- `docs/studioflow-open-intent-tests.md`
 
-```text
-Use StudioFlow skill studioflow-investigate.
-Intent: "Record a demo for onboarding and billing."
-Generate artifacts/flow.json for this repo.
-If intent details are missing, ask concise follow-up questions before authoring the flow.
-```
-
-`studioflow-investigate` automatically collects project context artifacts before creating the flow.
-
-3. Validate and run:
-
-```bash
-studioflow validate --flow artifacts/flow.json
-studioflow demo --flow artifacts/flow.json --intent "onboarding and billing demo"
-```
-
-`run`/`demo` automatically performs Screen Studio preflight checks. Use manual prep only for troubleshooting.
-Headed runs auto-open a maximized browser window for cleaner recording composition.
-Runs do not auto-export by default; include `recorder_export` in flow steps only when export is explicitly needed.
-
-## Optional: Trigger Runtime Skill In Agent
-
-If you want the agent to drive execution too, use:
-
-```text
-Use StudioFlow skill studioflow-cli.
-Validate artifacts/flow.json, run the demo, and report run artifact paths.
-```
-
-## More Docs
-
-- `docs/day0-runbook.md` first end-to-end run
-- `docs/cli-reference.md` commands and flags
-- `docs/configuration.md` runtime config precedence
-- `docs/testing-manual-smoke.md` release smoke checklist
-- `docs/studioflow-open-intent-tests.md` open-intent clarification evals
-- `docs/README.md` full documentation map
+Contributor and policy docs:
+- `CONTRIBUTING.md`
+- `AGENTS.md`
+- `SECURITY.md`
+- `CODE_OF_CONDUCT.md`
