@@ -122,22 +122,3 @@ export interface RunArtifactIndex {
   endedAt: string;
   files: Record<string, string>;
 }
-
-export interface LearningCandidate {
-  candidateId: string;
-  sourceRunId: string;
-  intent: string;
-  flow: FlowDefinition;
-  selectorStabilityScore: number;
-  replay: { attempts: number; passes: number };
-  validationState: "candidate" | "validated" | "rejected";
-}
-
-export interface PromotionRecord {
-  candidateId: string;
-  promotedFlowId: string;
-  promotedAt: string;
-  replayAttempts: number;
-  replayPasses: number;
-  selectorStabilityScore: number;
-}

@@ -6,7 +6,6 @@ import { getClaudeSkillsDir, getCodexSkillsDir } from "./runtime-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const bundledSkillNames = ["studioflow-cli", "studioflow-investigate"] as const;
-const deprecatedSkillNames = ["studioflow-cli-operator", "webapp-flow-learner"] as const;
 
 export type SkillsAgent = "codex" | "claude";
 export type SkillsAgentSelection = SkillsAgent | "all";
@@ -69,13 +68,6 @@ async function resolveBundledSkillsDir(): Promise<string> {
 
 async function syncSkillsToTarget(sourceDir: string, targetDir: string, force: boolean) {
   await fs.mkdir(targetDir, { recursive: true });
-
-  for (const deprecatedName of deprecatedSkillNames) {
-    const deprecatedPath = path.join(targetDir, deprecatedName);
-    if (await pathExists(deprecatedPath)) {
-      await fs.rm(deprecatedPath, { recursive: true, force: true });
-    }
-  }
 
   const installed: string[] = [];
   const skipped: string[] = [];

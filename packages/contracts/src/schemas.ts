@@ -127,25 +127,3 @@ export const runArtifactIndexSchema = z.object({
   endedAt: z.string(),
   files: z.record(z.string(), z.string())
 });
-
-export const learningCandidateSchema = z.object({
-  candidateId: z.string().min(1),
-  sourceRunId: z.string().min(1),
-  intent: z.string().min(1),
-  flow: flowDefinitionSchema,
-  selectorStabilityScore: z.number().min(0).max(1),
-  replay: z.object({
-    attempts: z.number().int().nonnegative(),
-    passes: z.number().int().nonnegative()
-  }),
-  validationState: z.enum(["candidate", "validated", "rejected"])
-});
-
-export const promotionRecordSchema = z.object({
-  candidateId: z.string().min(1),
-  promotedFlowId: z.string().min(1),
-  promotedAt: z.string(),
-  replayAttempts: z.number().int().nonnegative(),
-  replayPasses: z.number().int().nonnegative(),
-  selectorStabilityScore: z.number().min(0).max(1)
-});

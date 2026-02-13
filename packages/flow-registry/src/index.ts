@@ -5,11 +5,7 @@ import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import {
   flowDefinitionSchema,
-  learningCandidateSchema,
-  promotionRecordSchema,
-  type FlowDefinition,
-  type LearningCandidate,
-  type PromotionRecord
+  type FlowDefinition
 } from "@studioflow/contracts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,14 +23,6 @@ function dataRoot() {
 
 function userFlowsDir() {
   return path.join(dataRoot(), "flows");
-}
-
-function candidatesDir() {
-  return path.join(dataRoot(), "learned", "candidates");
-}
-
-function promotionsDir() {
-  return path.join(dataRoot(), "learned", "promotions");
 }
 
 async function listFlowFiles(dir: string) {
@@ -85,62 +73,4 @@ export async function getFlowById(id: string): Promise<FlowDefinition> {
     throw new Error(`Flow not found: ${id}`);
   }
   return flow;
-}
-
-export async function writeCandidate(name: string, payload: unknown) {
-  const parsed = learningCandidateSchema.parse(payload);
-  const outputDir = candidatesDir();
-  await fs.mkdir(outputDir, { recursive: true });
-  const filename = `${Date.now()}-${name}.json`;
-  const filePath = path.join(outputDir, filename);
-  await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf8");
-  return filePath;
-}
-
-export async function loadCandidateFromFile(filePath: string): Promise<LearningCandidate> {
-  const raw = await fs.readFile(filePath, "utf8");
-  return learningCandidateSchema.parse(JSON.parse(raw));
-}
-
-export async function loadCandidates(): Promise<Array<{ file: string; candidate: LearningCandidate }>> {
-  const outputDir = candidatesDir();
-  await fs.mkdir(outputDir, { recursive: true });
-  const files = await fs.readdir(outputDir);
-  const loaded: Array<{ file: string; candidate: LearningCandidate }> = [];
-
-  for (const file of files) {
-    if (!file.endsWith(".json")) continue;
-    const fullPath = path.join(outputDir, file);
-    const candidate = await loadCandidateFromFile(fullPath);
-    loaded.push({ file: fullPath, candidate });
-  }
-
-  return loaded.sort((a, b) => a.file.localeCompare(b.file));
-}
-
-export async function getCandidateById(candidateId: string): Promise<{ file: string; candidate: LearningCandidate }> {
-  const loaded = await loadCandidates();
-  const match = loaded.find((entry) => entry.candidate.candidateId === candidateId);
-  if (!match) {
-    throw new Error(`Candidate not found: ${candidateId}`);
-  }
-  return match;
-}
-
-export async function writePromotedFlow(flow: FlowDefinition) {
-  const validated = flowDefinitionSchema.parse(flow);
-  const outputDir = userFlowsDir();
-  await fs.mkdir(outputDir, { recursive: true });
-  const filePath = path.join(outputDir, `${validated.id}.yaml`);
-  await fs.writeFile(filePath, YAML.stringify(validated), "utf8");
-  return filePath;
-}
-
-export async function writePromotionRecord(record: PromotionRecord) {
-  const validated = promotionRecordSchema.parse(record);
-  const outputDir = promotionsDir();
-  await fs.mkdir(outputDir, { recursive: true });
-  const filePath = path.join(outputDir, `${Date.now()}-${validated.candidateId}.json`);
-  await fs.writeFile(filePath, JSON.stringify(validated, null, 2), "utf8");
-  return filePath;
 }
