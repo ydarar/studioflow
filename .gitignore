@@ -9,5 +9,4 @@ apps/cli/skills
 /artifacts
 /apps/cli/artifacts
 .env
-pnpm-lock.yaml
 playwright-report
