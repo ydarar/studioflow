@@ -148,12 +148,6 @@ importers:
         specifier: workspace:*
         version: link:../flow-registry
 
-  packages/planner:
-    dependencies:
-      '@studioflow/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-
 packages:
 
   '@emnapi/runtime@1.8.1':
