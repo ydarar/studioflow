@@ -172,4 +172,22 @@ describe.sequential("playwright action execution", () => {
       )
     ).rejects.toThrow("Unsupported action: not_real_action");
   });
+
+  it("sanitizes screenshot filenames to stay inside run artifacts", async () => {
+    await page.setContent("<main>safe</main>");
+
+    await executeStep(
+      page,
+      {
+        id: "capture-traversal",
+        action: "screenshot",
+        value: "../../outside"
+      },
+      runDir,
+      "http://localhost:4173"
+    );
+
+    await expect(fs.access(path.join(runDir, "screenshots", "outside.png"))).resolves.toBeUndefined();
+    await expect(fs.access(path.join(runDir, "outside.png"))).rejects.toMatchObject({ code: "ENOENT" });
+  });
 });

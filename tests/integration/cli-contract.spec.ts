@@ -15,11 +15,18 @@ function stripAnsi(text: string) {
   return text.replace(/\u001b\[[0-9;]*m/g, "");
 }
 
+function stripPnpmNoise(text: string) {
+  return text
+    .split("\n")
+    .filter((line) => !/\|\s*WARN\s+Unsupported platform:/.test(line))
+    .join("\n");
+}
+
 async function runCli(args: string[]) {
   try {
     const result = await execFileAsync(
       "pnpm",
-      ["--filter", "studioflow", "exec", "tsx", "src/index.ts", ...args],
+      ["--silent", "--filter", "studioflow", "exec", "tsx", "src/index.ts", ...args],
       {
         cwd: rootDir,
         env: {
@@ -30,8 +37,8 @@ async function runCli(args: string[]) {
     );
     return {
       code: 0,
-      stdout: stripAnsi(result.stdout),
-      stderr: stripAnsi(result.stderr)
+      stdout: stripPnpmNoise(stripAnsi(result.stdout)),
+      stderr: stripPnpmNoise(stripAnsi(result.stderr))
     };
   } catch (error) {
     const failed = error as {
@@ -41,8 +48,8 @@ async function runCli(args: string[]) {
     };
     return {
       code: failed.code ?? 1,
-      stdout: stripAnsi(failed.stdout ?? ""),
-      stderr: stripAnsi(failed.stderr ?? "")
+      stdout: stripPnpmNoise(stripAnsi(failed.stdout ?? "")),
+      stderr: stripPnpmNoise(stripAnsi(failed.stderr ?? ""))
     };
   }
 }

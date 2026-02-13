@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { Page } from "playwright";
 import type { FlowStep } from "@studioflow/contracts";
 import { assertText, assertVisible } from "./assertions.js";
@@ -201,6 +202,14 @@ function resolvePacedDelay(
   return Math.max(0, Math.min(maxDelayMs, Math.round(value)));
 }
 
+function sanitizeScreenshotName(raw: string) {
+  const normalized = raw.trim().replace(/\\/g, "/");
+  const base = normalized.split("/").filter(Boolean).pop() ?? "screenshot";
+  const withoutPng = base.toLowerCase().endsWith(".png") ? base.slice(0, -4) : base;
+  const safe = withoutPng.replace(/[^A-Za-z0-9._-]/g, "_").replace(/_+/g, "_").replace(/^\.+/, "").slice(0, 120);
+  return safe || "screenshot";
+}
+
 async function ensureCursorOverlay(page: Page, runtime: RuntimePacingDefaults) {
   if (!runtime.renderCursorOverlay) return;
   await page.evaluate(cursorOverlaySetupScript(runtime.clickPulseMs));
@@ -332,8 +341,9 @@ export async function executeStep(
   }
 
   if (step.action === "screenshot") {
-    const name = step.value ?? `${step.id}.png`;
-    await page.screenshot({ path: `${runDir}/screenshots/${name}.png`, fullPage: true });
+    const name = sanitizeScreenshotName(step.value ?? step.id);
+    const screenshotPath = path.join(runDir, "screenshots", `${name}.png`);
+    await page.screenshot({ path: screenshotPath, fullPage: true });
     await applyPostStepPacing(step, context, runtime);
     return;
   }

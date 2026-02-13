@@ -10,3 +10,4 @@ apps/cli/skills
 /apps/cli/artifacts
 .env
 playwright-report
+studioflow-*.tgz

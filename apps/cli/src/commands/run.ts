@@ -11,6 +11,84 @@ import { validateFlowDefinition } from "./flow-validation.js";
 import { resolveFromWorkspace, workspaceRoot } from "./path-utils.js";
 import { runScreenStudioPreflight } from "./screenstudio-prep.js";
 
+interface ParsedStartCommand {
+  command: string;
+  args: string[];
+}
+
+function isWhitespace(char: string) {
+  return /\s/.test(char);
+}
+
+export function parseStartCommand(raw: string): ParsedStartCommand {
+  const tokens: string[] = [];
+  let current = "";
+  let tokenStarted = false;
+  let quote: '"' | "'" | null = null;
+  let escaped = false;
+
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+
+    if (escaped) {
+      current += char;
+      tokenStarted = true;
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\" && quote !== "'") {
+      escaped = true;
+      tokenStarted = true;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) {
+        quote = null;
+      } else {
+        current += char;
+      }
+      tokenStarted = true;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      tokenStarted = true;
+      continue;
+    }
+
+    if (isWhitespace(char)) {
+      if (tokenStarted) {
+        tokens.push(current);
+        current = "";
+        tokenStarted = false;
+      }
+      continue;
+    }
+
+    current += char;
+    tokenStarted = true;
+  }
+
+  if (escaped) {
+    throw new Error("Start command ends with an escape character.");
+  }
+  if (quote) {
+    throw new Error("Start command contains an unterminated quote.");
+  }
+  if (tokenStarted) {
+    tokens.push(current);
+  }
+  if (tokens.length === 0) {
+    throw new Error("Start command is empty.");
+  }
+
+  const [command, ...args] = tokens;
+  return { command, args };
+}
+
 async function waitForHealth(healthUrl: string, timeoutMs = 45_000) {
   const start = Date.now();
   let lastError: unknown = null;
@@ -49,8 +127,9 @@ async function startAppLifecycle(
     );
   }
 
-  const child = spawn(startCommand, {
-    shell: true,
+  const parsedStartCommand = parseStartCommand(startCommand);
+  const child = spawn(parsedStartCommand.command, parsedStartCommand.args, {
+    shell: false,
     cwd: workspaceRoot(),
     stdio: "ignore",
     detached: false
