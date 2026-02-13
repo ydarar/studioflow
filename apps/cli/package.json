@@ -41,7 +41,8 @@
     "list-flows": "tsx src/index.ts list-flows"
   },
   "dependencies": {
-    "playwright": "^1.55.0"
+    "playwright": "^1.55.0",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@studioflow/adapters-desktop": "workspace:*",
