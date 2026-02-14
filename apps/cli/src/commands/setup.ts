@@ -82,7 +82,7 @@ export async function setupCommand(opts: SetupOptions = {}) {
 
   const permissions = await checkPermissions();
   const permissionChecks = [
-    { label: "Screen Studio installed", ok: permissions.screenStudioInstalled },
+    { label: "Screen Studio installed (optional)", ok: permissions.screenStudioInstalled },
     { label: "AppleScript available", ok: permissions.canRunAppleScript },
     { label: "Keystroke automation allowed", ok: permissions.canSendKeystrokes }
   ];

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-StudioFlow is a deterministic demo automation runtime that executes provided flow artifacts, drives browser actions with pacing, and controls Screen Studio recording on macOS.
+StudioFlow is a deterministic demo automation runtime that executes provided flow artifacts, drives browser actions with pacing, and controls recorder automation on macOS (QuickTime by default, Screen Studio optional).
 
 ## System layers
 
@@ -29,7 +29,7 @@ StudioFlow is a deterministic demo automation runtime that executes provided flo
 5. Adapters
 - Browser adapter (`packages/adapters-playwright`): Playwright launch + step execution.
 - Recorder adapter (`packages/adapters-screenstudio`): Screen Studio menu automation and optional export trigger.
-- Desktop adapter (`packages/adapters-desktop`): AppleScript execution and permission checks.
+- Desktop adapter (`packages/adapters-desktop`): AppleScript execution, permission checks, and QuickTime recorder automation.
 
 6. Artifact writer (`packages/artifacts`)
 - Creates `<runsDir>/<run-id>` structure.
@@ -45,7 +45,7 @@ StudioFlow is a deterministic demo automation runtime that executes provided flo
 2. CLI resolves flows and validates each flow definition.
 3. Engine creates run context (`<runsDir>/<run-id>`) and launches browser.
 4. Engine starts app lifecycle (reuse existing app if health endpoint is already healthy).
-5. Engine starts Screen Studio recording.
+5. Engine starts selected recorder backend (`quicktime` default, `screenstudio` optional).
 6. Engine executes every step in every selected flow with per-step retry policy.
 7. Engine stops recorder and only exports when flow steps explicitly request `recorder_export`.
 8. Engine writes run artifacts (`plan.json`, `run.json`, `events.jsonl`).
@@ -67,7 +67,7 @@ Failure path:
 
 ## Boundary assumptions
 
-- macOS is required for Screen Studio AppleScript automation.
-- Screen Studio must expose expected `Record` menu items.
+- macOS is required for AppleScript-based recorder automation.
+- QuickTime File menu must expose `New Screen Recording` (or Screen Studio must expose expected `Record` menu items when selected).
 - Demo flow selectors are expected to be stable (`data-testid` preferred).
 - Intent-to-flow conversion is outside CLI runtime and is handled in agent skill workflow.

@@ -9,13 +9,19 @@ const {
   executeStepMock,
   startRecordingMock,
   stopRecordingMock,
-  exportRecordingMock
+  exportRecordingMock,
+  startQuickTimeRecordingMock,
+  stopQuickTimeRecordingMock,
+  exportQuickTimeRecordingMock
 } = vi.hoisted(() => ({
   startBrowserMock: vi.fn(),
   executeStepMock: vi.fn(),
   startRecordingMock: vi.fn(),
   stopRecordingMock: vi.fn(),
-  exportRecordingMock: vi.fn()
+  exportRecordingMock: vi.fn(),
+  startQuickTimeRecordingMock: vi.fn(),
+  stopQuickTimeRecordingMock: vi.fn(),
+  exportQuickTimeRecordingMock: vi.fn()
 }));
 
 vi.mock("@studioflow/adapters-playwright", () => ({
@@ -27,6 +33,12 @@ vi.mock("@studioflow/adapters-screenstudio", () => ({
   startRecording: startRecordingMock,
   stopRecording: stopRecordingMock,
   exportRecording: exportRecordingMock
+}));
+
+vi.mock("@studioflow/adapters-desktop", () => ({
+  startQuickTimeRecording: startQuickTimeRecordingMock,
+  stopQuickTimeRecording: stopQuickTimeRecordingMock,
+  exportQuickTimeRecording: exportQuickTimeRecordingMock
 }));
 
 function parseJsonLines(raw: string) {
@@ -65,6 +77,9 @@ describe.sequential("orchestrator engine", () => {
     startRecordingMock.mockReset();
     stopRecordingMock.mockReset();
     exportRecordingMock.mockReset();
+    startQuickTimeRecordingMock.mockReset();
+    stopQuickTimeRecordingMock.mockReset();
+    exportQuickTimeRecordingMock.mockReset();
 
     tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-orchestrator-"));
     process.env = {
@@ -84,6 +99,9 @@ describe.sequential("orchestrator engine", () => {
     startRecordingMock.mockResolvedValue(undefined);
     stopRecordingMock.mockResolvedValue(undefined);
     exportRecordingMock.mockResolvedValue(undefined);
+    startQuickTimeRecordingMock.mockResolvedValue(undefined);
+    stopQuickTimeRecordingMock.mockResolvedValue(undefined);
+    exportQuickTimeRecordingMock.mockResolvedValue(undefined);
   });
 
   afterEach(async () => {
@@ -231,5 +249,26 @@ describe.sequential("orchestrator engine", () => {
     expect(context?.pacingMultiplier).toBe(1.3);
     expect(context?.strictPacing).toBe(true);
     expect(context?.jitterSeed).toContain("billing:step-1");
+  });
+
+  it("uses quicktime recorder lifecycle when configured", async () => {
+    executeStepMock.mockResolvedValue(undefined);
+    const closeApp = vi.fn(async () => {});
+    const { runEngine } = await import("../../packages/orchestrator/src/engine.ts");
+
+    await runEngine({
+      intent: "billing flow",
+      flows: [makeFlow({ action: "recorder_export" })],
+      baseUrl: "http://localhost:4173",
+      recorder: "quicktime",
+      startApp: async () => closeApp
+    });
+
+    expect(startQuickTimeRecordingMock).toHaveBeenCalledTimes(1);
+    expect(stopQuickTimeRecordingMock).toHaveBeenCalledTimes(1);
+    expect(exportQuickTimeRecordingMock).toHaveBeenCalledTimes(1);
+    expect(startRecordingMock).not.toHaveBeenCalled();
+    expect(stopRecordingMock).not.toHaveBeenCalled();
+    expect(exportRecordingMock).not.toHaveBeenCalled();
   });
 });

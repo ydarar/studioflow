@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import kleur from "kleur";
-import { bootstrapReportSchema } from "@studioflow/contracts";
+import { bootstrapReportSchema, type RecorderBackend } from "@studioflow/contracts";
 import { resolveFromWorkspace, workspaceRoot } from "./path-utils.js";
 import { getStudioflowDataDir } from "./runtime-paths.js";
 
@@ -12,6 +12,7 @@ interface RuntimeConfigFile {
   startCommand?: string;
   healthPath?: string;
   headless?: boolean;
+  recorder?: RecorderBackend;
   bootstrapReport?: string;
   runsDir?: string;
 }
@@ -21,6 +22,7 @@ interface RuntimeValues {
   startCommand: string | undefined;
   healthPath: string;
   headless: boolean;
+  recorder: RecorderBackend;
   runsDir: string;
 }
 
@@ -29,6 +31,7 @@ interface RuntimeSources {
   startCommand: ConfigSource;
   healthPath: ConfigSource;
   headless: ConfigSource;
+  recorder: ConfigSource;
   runsDir: ConfigSource;
 }
 
@@ -37,6 +40,7 @@ export interface RuntimeConfigOverrides {
   startCommand?: string;
   healthPath?: string;
   headless?: boolean;
+  recorder?: RecorderBackend;
   bootstrapReportPath?: string;
   runsDir?: string;
 }
@@ -77,6 +81,14 @@ function optionalBoolean(value: unknown, key: string, label: string) {
   return value;
 }
 
+function optionalRecorder(value: unknown, key: string, label: string) {
+  if (value === undefined) return undefined;
+  if (value === "quicktime" || value === "screenstudio") {
+    return value;
+  }
+  throw new Error(`${label} field "${key}" must be "quicktime" or "screenstudio".`);
+}
+
 function parseRuntimeConfigFile(value: unknown, label: string): RuntimeConfigFile {
   const obj = ensureObject(value, label);
   return {
@@ -84,6 +96,7 @@ function parseRuntimeConfigFile(value: unknown, label: string): RuntimeConfigFil
     startCommand: optionalString(obj.startCommand, "startCommand", label),
     healthPath: optionalString(obj.healthPath, "healthPath", label),
     headless: optionalBoolean(obj.headless, "headless", label),
+    recorder: optionalRecorder(obj.recorder, "recorder", label),
     bootstrapReport: optionalString(obj.bootstrapReport, "bootstrapReport", label),
     runsDir: optionalString(obj.runsDir, "runsDir", label)
   };
@@ -215,6 +228,15 @@ export async function resolveRuntimeConfig(overrides: RuntimeConfigOverrides = {
     false
   );
 
+  const recorder = chooseString(
+    [
+      { value: overrides.recorder, source: "flag" },
+      { value: project.config.recorder, source: "project-config" },
+      { value: user.config.recorder, source: "user-config" }
+    ],
+    "quicktime"
+  );
+
   const runsDir = chooseString(
     [
       { value: overrides.runsDir, source: "flag" },
@@ -232,6 +254,7 @@ export async function resolveRuntimeConfig(overrides: RuntimeConfigOverrides = {
       startCommand: startCommand.value,
       healthPath: healthPath.value,
       headless: headless.value,
+      recorder: recorder.value as RecorderBackend,
       runsDir: runsDir.value
     },
     sources: {
@@ -239,6 +262,7 @@ export async function resolveRuntimeConfig(overrides: RuntimeConfigOverrides = {
       startCommand: startCommand.source,
       healthPath: healthPath.source,
       headless: headless.source,
+      recorder: recorder.source,
       runsDir: runsDir.source
     },
     files: {
@@ -266,6 +290,7 @@ export async function configShowCommand(opts: { json?: boolean; overrides?: Runt
   );
   console.log(`- healthPath: ${resolved.values.healthPath} (${resolved.sources.healthPath})`);
   console.log(`- headless: ${String(resolved.values.headless)} (${resolved.sources.headless})`);
+  console.log(`- recorder: ${resolved.values.recorder} (${resolved.sources.recorder})`);
   console.log(`- runsDir: ${resolved.values.runsDir} (${resolved.sources.runsDir})`);
   console.log(`- project config: ${resolved.files.projectConfigPath} (${resolved.files.projectConfigExists ? "found" : "missing"})`);
   console.log(`- user config: ${resolved.files.userConfigPath} (${resolved.files.userConfigExists ? "found" : "missing"})`);
@@ -307,6 +332,7 @@ export async function configCheckCommand(opts: { json?: boolean; overrides?: Run
   console.log(`- baseUrl: ${resolved.values.baseUrl}`);
   console.log(`- healthPath: ${resolved.values.healthPath}`);
   console.log(`- headless: ${String(resolved.values.headless)}`);
+  console.log(`- recorder: ${resolved.values.recorder}`);
   console.log(`- runsDir: ${resolved.values.runsDir}`);
   if (warnings.length > 0) {
     console.log(kleur.yellow("Warnings:"));

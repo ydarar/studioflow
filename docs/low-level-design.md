@@ -42,6 +42,7 @@ Run-time fields:
 - `startCommand`
 - `healthPath`
 - `headless`
+- `recorder`
 - `runsDir`
 
 Resolution order:
@@ -138,12 +139,14 @@ Source: `packages/adapters-playwright/src/actions.ts`
 
 Sources:
 - `packages/adapters-desktop/src/permissions.ts`
+- `packages/adapters-desktop/src/quicktime.ts`
 - `packages/adapters-screenstudio/src/menu-controls.ts`
 - `packages/adapters-screenstudio/src/recorder.ts`
 
 - Permission checks validate:
-  - Screen Studio installation path
+  - Screen Studio installation path (optional capability check)
   - AppleScript accessibility
   - keystroke automation capability
 - Recorder control uses AppleScript against Screen Studio `Record` menu.
+- QuickTime recorder control uses AppleScript/shortcuts against QuickTime Player File menu and save flow.
 - Export currently triggers menu action and confirm keypress; output path is not programmatically captured.

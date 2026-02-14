@@ -13,6 +13,7 @@ Run validated artifacts through deterministic execution.
 - `artifacts/studioflow-cli-handoff.json`
 
 If handoff exists, use it as the source of truth for `flowPath`, `intentSummary`, `baseUrl`, `startCommand`, and `healthPath`.
+If handoff includes `recorder`, treat it as source of truth and preserve explicit user recorder choice.
 If present, also consume `runtimePacing` from handoff for runtime timing env values.
 
 1. Confirm artifact presence:
@@ -29,7 +30,14 @@ pnpm run setup
 pnpm run doctor
 ```
 
-If run preflight fails, collect explicit Screen Studio diagnostics:
+If run preflight fails, collect recorder-specific diagnostics:
+- For `recorder=quicktime`:
+
+```bash
+pnpm quicktime-prep
+```
+
+- For `recorder=screenstudio`:
 
 ```bash
 pnpm screenstudio-prep
@@ -44,10 +52,11 @@ pnpm validate -- --flow artifacts/flow.json
 4. Execute recording run from artifact:
 
 ```bash
-STUDIOFLOW_CURSOR_MOVE_MS=<cursorMoveMs> STUDIOFLOW_CURSOR_HIGHLIGHT_MS=<cursorHighlightMs> STUDIOFLOW_TYPING_DELAY_MS=<typingDelayMs> STUDIOFLOW_CLICK_PULSE_MS=<clickPulseMs> STUDIOFLOW_STEP_PRE_DELAY_MS=<stepPreDelayMs> STUDIOFLOW_STEP_POST_DELAY_MS=<stepPostDelayMs> STUDIOFLOW_STEP_DWELL_MS=<stepDwellMs> pnpm demo -- --flow <flowPath> --intent "<intent-summary>" --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>
+STUDIOFLOW_CURSOR_MOVE_MS=<cursorMoveMs> STUDIOFLOW_CURSOR_HIGHLIGHT_MS=<cursorHighlightMs> STUDIOFLOW_TYPING_DELAY_MS=<typingDelayMs> STUDIOFLOW_CLICK_PULSE_MS=<clickPulseMs> STUDIOFLOW_STEP_PRE_DELAY_MS=<stepPreDelayMs> STUDIOFLOW_STEP_POST_DELAY_MS=<stepPostDelayMs> STUDIOFLOW_STEP_DWELL_MS=<stepDwellMs> pnpm demo -- --flow <flowPath> --intent "<intent-summary>" --recorder <recorder> --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>
 ```
 
 Only set timing env vars that are provided (or implied by selected run-feel profile) in handoff.
+If `recorder` is missing from handoff, default to `quicktime`.
 
 5. Inspect outputs:
 - `<runsDir>/<run-id>/run.json`

@@ -216,8 +216,11 @@ async function writeInstalledSkillMetadata(
 }
 
 async function resolveBundledSkillsDir(): Promise<string> {
+  // Prefer packaged bundled assets, but keep workspace and legacy fallbacks for local development.
   const candidates = [
     process.env.STUDIOFLOW_SKILLS_SOURCE,
+    path.resolve(__dirname, "../bundled/skills"),
+    path.resolve(__dirname, "../../bundled/skills"),
     path.resolve(__dirname, "../skills"),
     path.resolve(__dirname, "../../skills"),
     path.resolve(__dirname, "../../../../skills"),

@@ -6,10 +6,12 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(__dirname, "..");
+// Source-of-truth lives in the workspace; packaged runtime reads from bundled/.
 const sourceSkillsRoot = path.resolve(packageRoot, "../../skills");
-const targetSkillsRoot = path.join(packageRoot, "skills");
+const bundledRoot = path.join(packageRoot, "bundled");
+const targetSkillsRoot = path.join(bundledRoot, "skills");
 const sourceFlowsRoot = path.resolve(packageRoot, "../../packages/flow-registry/flows");
-const targetFlowsRoot = path.join(packageRoot, "flows");
+const targetFlowsRoot = path.join(bundledRoot, "flows");
 const skillNames = ["studioflow-cli", "studioflow-investigate"];
 const flowNames = ["billing.yaml", "onboarding.yaml", "onboarding_billing.yaml"];
 
@@ -85,6 +87,8 @@ async function main() {
   await Promise.all(skillNames.map(ensureSkillExists));
   await Promise.all(flowNames.map(ensureFlowExists));
 
+  await fs.mkdir(bundledRoot, { recursive: true });
+
   await fs.rm(targetSkillsRoot, { recursive: true, force: true });
   await fs.mkdir(targetSkillsRoot, { recursive: true });
 
@@ -104,7 +108,7 @@ async function main() {
     await fs.cp(source, target);
   }
 
-  console.log(`Bundled assets synced: skills -> ${targetSkillsRoot}, flows -> ${targetFlowsRoot}`);
+  console.log(`Bundled assets synced: ${bundledRoot}`);
 }
 
 main().catch((error) => {

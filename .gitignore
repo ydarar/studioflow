@@ -4,7 +4,8 @@ dist
 coverage
 .runs
 apps/cli/.runs
-apps/cli/skills
+/apps/cli/bundled
+/apps/cli/skills
 /apps/cli/flows
 /artifacts
 /apps/cli/artifacts

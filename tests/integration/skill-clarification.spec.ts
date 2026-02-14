@@ -20,6 +20,8 @@ describe("studioflow-investigate clarification contract", () => {
     expect(skill).toContain("references/question-card-spec.md");
     expect(skill).toContain("references/clarification-state.md");
     expect(skill).toContain("Do not ask the user to run these commands manually.");
+    expect(skill).toContain("Infer run feel and pacing automatically");
+    expect(skill).toContain("Always include `runtimePacing` in handoff");
   });
 
   it("includes question-card and clarification-state reference files", async () => {

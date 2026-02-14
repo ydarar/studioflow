@@ -32,6 +32,10 @@ Supported keys in `.studioflow/config.json` and `~/.studioflow/config.json`:
   - Example: `true`
   - Default: `false`
 
+- `recorder` (`quicktime` | `screenstudio`)
+  - Example: `"quicktime"`
+  - Default: `quicktime`
+
 - `runsDir` (string)
   - Example: `".runs"`
   - Default: `~/.studioflow/runs` (or `$STUDIOFLOW_DATA_DIR/runs`)
@@ -48,6 +52,7 @@ Example project config:
   "startCommand": "pnpm dev",
   "healthPath": "/api/health",
   "headless": false,
+  "recorder": "quicktime",
   "runsDir": ".runs"
 }
 ```
@@ -60,6 +65,7 @@ Example project config:
 - `--start-command <command>`
 - `--health-path <path>`
 - `--headless <true|false>`
+- `--recorder <quicktime|screenstudio>`
 - `--bootstrap-report <path>`
 - `--runs-dir <path>`
 
@@ -102,6 +108,14 @@ These are optional advanced controls still read directly from environment:
 - `SCREENSTUDIO_EXPORT_DIALOG_CONFIRM_DELAY_MS`
 - `SCREENSTUDIO_EXPORT_DELAY_MS`
   - Used only when a run explicitly requests export via `recorder_export`.
+
+- `QUICKTIME_APP_NAME`
+- `QUICKTIME_PRE_CONFIRM_DELAY_MS`
+- `QUICKTIME_POST_START_DELAY_MS`
+- `QUICKTIME_POST_STOP_DELAY_MS`
+- `QUICKTIME_EXPORT_DIALOG_CONFIRM_DELAY_MS`
+- `QUICKTIME_EXPORT_DELAY_MS`
+  - Used only when `recorder` is `quicktime`.
 
 - `STUDIOFLOW_RENDER_CURSOR`
 - `STUDIOFLOW_CURSOR_MOVE_MS`

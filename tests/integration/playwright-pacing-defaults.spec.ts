@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { resolveRuntimePacingDefaults } from "@studioflow/adapters-playwright";
 
 describe("playwright runtime pacing defaults", () => {
-  it("uses balanced natural defaults", () => {
+  it("uses standard natural defaults", () => {
     const resolved = resolveRuntimePacingDefaults({});
 
     expect(resolved).toEqual({
       renderCursorOverlay: true,
+      cursorTheme: "macos",
       cursorMoveMs: 430,
       cursorHighlightMs: 170,
       realisticTyping: true,
@@ -23,6 +24,7 @@ describe("playwright runtime pacing defaults", () => {
   it("applies explicit env overrides", () => {
     const resolved = resolveRuntimePacingDefaults({
       STUDIOFLOW_RENDER_CURSOR: "false",
+      STUDIOFLOW_CURSOR_THEME: "generic",
       STUDIOFLOW_CURSOR_MOVE_MS: "600",
       STUDIOFLOW_CURSOR_HIGHLIGHT_MS: "250",
       STUDIOFLOW_REALISTIC_TYPING: "false",
@@ -37,6 +39,7 @@ describe("playwright runtime pacing defaults", () => {
 
     expect(resolved).toEqual({
       renderCursorOverlay: false,
+      cursorTheme: "generic",
       cursorMoveMs: 600,
       cursorHighlightMs: 250,
       realisticTyping: false,

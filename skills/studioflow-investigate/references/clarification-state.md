@@ -9,6 +9,7 @@ known:
   target_route: null
   user_goal: null
   done_assertion: null
+  recorder_backend: null
   data_input: []
   scope_limit: null
 missing:
@@ -27,8 +28,9 @@ risks: []
    - `target_route`
    - `user_goal`
    - `done_assertion`
-3. Do not exceed 2 rounds.
-4. If anchors are still missing after round 2:
+3. Resolve `recorder_backend` from explicit intent wording when present (`screenstudio` or `quicktime`), else default `quicktime`.
+4. Do not exceed 2 rounds.
+5. If anchors are still missing after round 2:
    - add explicit `assumptions`
    - keep `confidence: low`
    - generate best-effort deterministic `flow.json`
@@ -38,5 +40,6 @@ risks: []
 Include in final response:
 
 - `Resolved`: key anchors and selected values
+- `Recorder`: selected backend (`quicktime` or `screenstudio`)
 - `Assumptions`: any inferred defaults
 - `Confidence`: `high|medium|low`

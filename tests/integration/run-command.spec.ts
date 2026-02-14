@@ -14,12 +14,16 @@ const {
   loadFlowFromFileMock,
   runEngineMock,
   ensureAutomationPermissionsMock,
+  activateQuickTimeMock,
+  listQuickTimeFileMenuItemsMock,
   activateScreenStudioMock,
   listRecordMenuItemsMock
 } = vi.hoisted(() => ({
   loadFlowFromFileMock: vi.fn(),
   runEngineMock: vi.fn(),
   ensureAutomationPermissionsMock: vi.fn(),
+  activateQuickTimeMock: vi.fn(),
+  listQuickTimeFileMenuItemsMock: vi.fn(),
   activateScreenStudioMock: vi.fn(),
   listRecordMenuItemsMock: vi.fn()
 }));
@@ -33,7 +37,9 @@ vi.mock("@studioflow/orchestrator", () => ({
 }));
 
 vi.mock("@studioflow/adapters-desktop", () => ({
-  ensureAutomationPermissions: ensureAutomationPermissionsMock
+  ensureAutomationPermissions: ensureAutomationPermissionsMock,
+  activateQuickTime: activateQuickTimeMock,
+  listQuickTimeFileMenuItems: listQuickTimeFileMenuItemsMock
 }));
 
 vi.mock("@studioflow/adapters-screenstudio", () => ({
@@ -41,7 +47,10 @@ vi.mock("@studioflow/adapters-screenstudio", () => ({
   listRecordMenuItems: listRecordMenuItemsMock
 }));
 
-function makeFlow(id: string): FlowDefinition {
+function makeFlow(
+  id: string,
+  stepOverrides: Partial<FlowDefinition["steps"][number]> = {}
+): FlowDefinition {
   return {
     id,
     description: `${id} flow`,
@@ -50,7 +59,8 @@ function makeFlow(id: string): FlowDefinition {
       {
         id: "goto-root",
         action: "goto",
-        value: "/"
+        value: "/",
+        ...stepOverrides
       }
     ]
   };
@@ -64,6 +74,8 @@ describe.sequential("run command orchestration", () => {
     loadFlowFromFileMock.mockReset();
     runEngineMock.mockReset();
     ensureAutomationPermissionsMock.mockReset();
+    activateQuickTimeMock.mockReset();
+    listQuickTimeFileMenuItemsMock.mockReset();
     activateScreenStudioMock.mockReset();
     listRecordMenuItemsMock.mockReset();
 
@@ -80,6 +92,8 @@ describe.sequential("run command orchestration", () => {
       canSendKeystrokes: true,
       notes: []
     });
+    activateQuickTimeMock.mockResolvedValue(undefined);
+    listQuickTimeFileMenuItemsMock.mockResolvedValue(["New Screen Recording", "Close"]);
     activateScreenStudioMock.mockResolvedValue(undefined);
     listRecordMenuItemsMock.mockResolvedValue(["Record display", "Stop recording"]);
 
@@ -225,7 +239,20 @@ describe.sequential("run command orchestration", () => {
     expect(logged).toContain("Start command: (not configured)");
     expect(logged).toContain("Health path: /api/health");
     expect(logged).toContain("Headless: false");
+    expect(logged).toContain("Recorder: quicktime");
     expect(logged).toContain(`Runs dir: ${expectedRunsDir}`);
+    expect(runEngineMock).toHaveBeenCalledWith(expect.objectContaining({ recorder: "quicktime" }));
+  });
+
+  it("uses screenstudio recorder when selected in run overrides", async () => {
+    const { runFlowFileCommand } = await import("../../apps/cli/src/commands/run.ts");
+
+    await runFlowFileCommand("artifacts/flow.json", "artifact flow", { recorder: "screenstudio" });
+
+    expect(activateScreenStudioMock).toHaveBeenCalledTimes(1);
+    expect(listRecordMenuItemsMock).toHaveBeenCalledTimes(1);
+    expect(activateQuickTimeMock).not.toHaveBeenCalled();
+    expect(runEngineMock).toHaveBeenCalledWith(expect.objectContaining({ recorder: "screenstudio" }));
   });
 
   it("fails fast on invalid flow definitions before orchestrator execution", async () => {
@@ -247,6 +274,32 @@ describe.sequential("run command orchestration", () => {
       "Flow broken failed validation: step[0] (bad-click): action click requires target"
     );
     expect(runEngineMock).not.toHaveBeenCalled();
+  });
+
+  it("blocks recorder_export when intent does not explicitly request export", async () => {
+    loadFlowFromFileMock.mockResolvedValue(makeFlow("export-flow", { action: "recorder_export" }));
+    const { runFlowFileCommand } = await import("../../apps/cli/src/commands/run.ts");
+
+    await expect(runFlowFileCommand("artifacts/flow.json", "record onboarding flow")).rejects.toThrow(
+      "Flow includes recorder_export, but the run intent does not explicitly request export."
+    );
+    expect(runEngineMock).not.toHaveBeenCalled();
+  });
+
+  it("allows recorder_export when intent explicitly requests export", async () => {
+    loadFlowFromFileMock.mockResolvedValue(makeFlow("export-flow", { action: "recorder_export" }));
+    const { runFlowFileCommand } = await import("../../apps/cli/src/commands/run.ts");
+
+    await runFlowFileCommand("artifacts/flow.json", "record onboarding and export video");
+    expect(runEngineMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows recorder_export when allowExport override is true", async () => {
+    loadFlowFromFileMock.mockResolvedValue(makeFlow("export-flow", { action: "recorder_export" }));
+    const { runFlowFileCommand } = await import("../../apps/cli/src/commands/run.ts");
+
+    await runFlowFileCommand("artifacts/flow.json", "record onboarding flow", undefined, { allowExport: true });
+    expect(runEngineMock).toHaveBeenCalledTimes(1);
   });
 
   it("resolves --flow paths from workspace root for runFlowFileCommand", async () => {

@@ -10,21 +10,24 @@ export async function doctorCommand() {
 
   const checks = [
     {
-      name: "Screen Studio installed",
-      ok: permissions.screenStudioInstalled
+      name: "Screen Studio installed (optional)",
+      ok: permissions.screenStudioInstalled,
+      required: false
     },
     {
       name: "AppleScript available",
-      ok: permissions.canRunAppleScript
+      ok: permissions.canRunAppleScript,
+      required: true
     },
     {
       name: "Keystroke automation allowed",
-      ok: permissions.canSendKeystrokes
+      ok: permissions.canSendKeystrokes,
+      required: true
     }
   ];
 
   for (const check of checks) {
-    const mark = check.ok ? kleur.green("PASS") : kleur.red("FAIL");
+    const mark = check.ok ? kleur.green("PASS") : check.required ? kleur.red("FAIL") : kleur.yellow("WARN");
     console.log(`${mark} ${check.name}`);
   }
 
@@ -35,7 +38,7 @@ export async function doctorCommand() {
     }
   }
 
-  const failed = checks.filter((c) => !c.ok);
+  const failed = checks.filter((c) => c.required && !c.ok);
   if (failed.length > 0) {
     await triggerPermissionPrompts();
     await openPermissionSettings();

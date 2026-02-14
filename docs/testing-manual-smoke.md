@@ -1,4 +1,4 @@
-# Manual Screen Studio Smoke Checklist
+# Manual Recorder Smoke Checklist
 
 Use this checklist as a release gate after day-0 setup is already working.
 
@@ -11,7 +11,7 @@ Do not use this doc for initial environment setup. Use `docs/day0-runbook.md` fo
 ## Preconditions
 
 1. Day-0 runbook has already passed on this machine.
-2. Screen Studio is installed and running.
+2. QuickTime Player or Screen Studio is available on the machine.
 3. Target branch/build is checked out locally.
 
 ## Smoke checklist
@@ -31,7 +31,13 @@ pnpm run doctor
 pnpm config check
 ```
 
-3. Optional targeted Screen Studio diagnostics (only when run preflight fails).
+3. Optional targeted recorder diagnostics (only when run preflight fails).
+
+```bash
+pnpm quicktime-prep
+```
+
+If running with Screen Studio:
 
 ```bash
 pnpm screenstudio-prep
@@ -48,7 +54,7 @@ pnpm demo -- --flow artifacts/flow.json --intent "onboarding and billing smoke"
 - `<runsDir>/<run-id>/run.json` exists and reports `status: success`.
 - `<runsDir>/<run-id>/events.jsonl` exists and contains completion events.
 - `<runsDir>/<run-id>/screenshots/` contains expected screenshots.
-- Screen Studio created a new project in `~/Screen Studio Projects`.
+- Recorder output is captured by the selected backend (QuickTime default or Screen Studio).
 - Exported media exists only when the flow explicitly includes `recorder_export`.
 
 6. Optional: open-intent clarification quality spot-check.
@@ -59,11 +65,12 @@ pnpm demo -- --flow artifacts/flow.json --intent "onboarding and billing smoke"
 ## Failure signals
 
 - `doctor` fails installation or permission checks.
+- `quicktime-prep` fails to list expected `New Screen Recording` action.
 - `screenstudio-prep` fails to list expected `Record` actions.
 - `validate` fails for `artifacts/flow.json`.
 - Open-intent runs ask excessive questions or skip assertions in generated flow.
 - `run.json` reports `failed`.
-- No new Screen Studio project after run.
+- No recorder output after run.
 - Exported file missing when flow explicitly requests `recorder_export`.
 
 ## Triage pointers

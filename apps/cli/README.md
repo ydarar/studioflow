@@ -8,9 +8,9 @@ This package includes:
 
 ## Requirements
 
-- macOS (Screen Studio automation)
-- Screen Studio installed
+- macOS (QuickTime/Screen Studio automation)
 - Node.js 22+
+- QuickTime Player (built into macOS) or Screen Studio
 
 ## Install
 
@@ -63,9 +63,10 @@ Record a demo for onboarding and billing.
 - validate the flow
 - execute recording through the CLI runtime
 
-`run`/`demo` automatically performs Screen Studio preflight checks. Use manual prep only for troubleshooting.
+`run`/`demo` automatically performs recorder preflight checks. QuickTime is the default backend; use `--recorder screenstudio` to opt into Screen Studio.
 Headed runs auto-open a maximized browser window for cleaner recording composition.
 Runs do not auto-export by default; include `recorder_export` in flow steps only when export is explicitly needed.
+Runs now also block `recorder_export` unless intent text explicitly asks for export, or `--allow-export true` is provided.
 
 ## Advanced Manual Mode (Optional)
 

@@ -11,7 +11,19 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
-const builtInFlowsDir = path.join(rootDir, "flows");
+
+function builtInFlowsDirs() {
+  const configured = process.env.STUDIOFLOW_FLOWS_SOURCE?.trim();
+  // Support both workspace execution and packaged CLI runtime layouts.
+  const candidates = [
+    configured ? path.resolve(configured) : "",
+    path.join(rootDir, "bundled", "flows"),
+    path.join(rootDir, "flows"),
+    path.resolve(rootDir, "../../packages/flow-registry/flows"),
+    path.resolve(process.cwd(), "packages/flow-registry/flows")
+  ].filter((value): value is string => Boolean(value));
+  return Array.from(new Set(candidates));
+}
 
 function dataRoot() {
   const configured = process.env.STUDIOFLOW_DATA_DIR ?? process.env.STUDIOFLOW_HOME;
@@ -52,7 +64,7 @@ export async function loadFlowFromFile(filePath: string): Promise<FlowDefinition
 
 export async function loadFlows(): Promise<FlowDefinition[]> {
   const merged = new Map<string, FlowDefinition>();
-  const dirs = [builtInFlowsDir, userFlowsDir()];
+  const dirs = [...builtInFlowsDirs(), userFlowsDir()];
 
   for (const dir of dirs) {
     const files = await listFlowFiles(dir);

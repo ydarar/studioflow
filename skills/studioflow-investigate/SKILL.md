@@ -39,11 +39,19 @@ Open-intent detection:
   - `user_goal`: what user action/outcome to demonstrate
   - `done_assertion`: what text/element proves completion
 
+Recorder selection:
+- Detect explicit recorder preference from user wording before authoring handoff:
+  - If intent says `screen studio` (or equivalent), set recorder to `screenstudio`.
+  - If intent says `quicktime` or `quicktime player`, set recorder to `quicktime`.
+  - If not specified, default to `quicktime`.
+- Treat explicit user recorder wording as authoritative over defaults.
+
 Clarification loop:
 - Max 2 rounds.
 - Ask 1-3 questions per round (adaptive; only missing high-impact fields).
 - Question priority: `done_assertion` -> `target_route` -> `user_goal` -> optional inputs/scope.
-- Capture optional run-feel preferences when provided (for example: `fast`, `balanced`, `cinematic`, or explicit timing overrides).
+- Infer run feel and pacing automatically from user intent + discovered UI complexity.
+- Ask about run-feel preferences only when user intent explicitly asks for a style (for example: `fast`, `standard`, `cinematic`).
 - If host supports structured question-card requests, emit payloads from `references/question-card-spec.md`.
 - If structured cards are not supported, ask equivalent plain-language questions.
 - Track known/missing fields using `references/clarification-state.md`.
@@ -54,7 +62,8 @@ Rules for authored flow:
 - Deterministic steps only.
 - Prefer stable selectors (`data-testid`).
 - Include clear step IDs and assertions at key transitions.
-- Include optional pacing fields when useful for recording quality.
+- Always synthesize pacing fields (`preDelayMs`, `postDelayMs`, `mouseMoveMs`, `highlightMs`, `dwellMs`) for interaction-heavy steps to keep demos human-looking.
+- Model scroll risk during authoring. For below-fold or overflow-container targets, add stable preconditions (`wait_for` on section/container) before interaction steps.
 - Add `recorder_export` only when the user explicitly asks for export at run completion.
 - If clarification remains incomplete after 2 rounds, generate best-effort flow with explicit assumptions.
 
@@ -69,7 +78,8 @@ pnpm validate -- --flow artifacts/flow.json
 8. Emit deterministic runtime handoff for `studioflow-cli`.
 
 Write `artifacts/studioflow-cli-handoff.json` using `references/cli-handoff-spec.md`.
-- Include `runtimePacing` in handoff when run-feel preferences or timing overrides are known.
+- Always include `runtimePacing` in handoff, inferred from authored flow pacing and intent.
+- Always include `recorder` in handoff (`quicktime` or `screenstudio`), resolved from intent wording + defaults.
 
 9. Hand off execution to `studioflow-cli` immediately.
 

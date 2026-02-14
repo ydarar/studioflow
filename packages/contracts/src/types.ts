@@ -12,6 +12,7 @@ export type FlowAction =
 
 export type PacingProfile = "fast" | "standard" | "cinematic";
 export type EmphasisScope = "flowId" | "tag" | "stepId" | "route" | "action";
+export type RecorderBackend = "quicktime" | "screenstudio";
 
 export interface PacingEmphasisDirective {
   scope: EmphasisScope;

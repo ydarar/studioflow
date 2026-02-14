@@ -32,9 +32,15 @@ Flow steps may include pacing fields:
 - dwellMs
 - narrativeCheckpoint
 
+Authoring intelligence rules:
+- Prefer setting pacing fields for click/type/assert transition steps by default, not only on outliers.
+- Anticipate scroll-sensitive interactions (below fold, nested overflow containers) and add deterministic setup steps (`wait_for` container/section) before click/type actions.
+- Keep selectors stable (`data-testid`) and avoid positional selectors for scroll-sensitive regions.
+
 Recorder note:
 - Include `recorder_export` only when user explicitly asks to export at run completion.
 - Without `recorder_export`, StudioFlow stops recording and completes the run without export.
+- Recorder software selection is not encoded in `flow.json`; include it in `studioflow-cli-handoff.json` as `recorder`.
 
 ## Open-intent fallback note
 

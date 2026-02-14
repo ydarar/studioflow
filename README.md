@@ -10,7 +10,7 @@ If you are an end user installing from npm, use the CLI README:
 StudioFlow's steel thread is:
 1. Agent interprets intent and authors deterministic artifact(s).
 2. CLI validates and executes those artifacts.
-3. Screen Studio records the run for review.
+3. Recorder backend captures the run for review (QuickTime default, Screen Studio optional).
 
 This repo is optimized for developing and maintaining that runtime path.
 
@@ -36,7 +36,7 @@ This repo is optimized for developing and maintaining that runtime path.
 Prerequisites:
 - Node.js 22+
 - pnpm 10+
-- macOS for Screen Studio integration paths
+- macOS for recorder automation paths (QuickTime or Screen Studio)
 
 Install and run checks:
 

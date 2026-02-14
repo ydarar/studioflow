@@ -12,12 +12,12 @@ For release validation, use `docs/testing-manual-smoke.md`.
 
 ## Preconditions
 
-1. macOS with Screen Studio installed.
+1. macOS with QuickTime Player (built in) or Screen Studio installed.
 2. Terminal has Automation and Accessibility permissions.
 3. Dependencies installed (`pnpm install`).
 4. Optional project config prepared at `.studioflow/config.json` (if you need runtime overrides).
 
-## Step 1: verify host and Screen Studio access
+## Step 1: verify host and recorder access
 
 ```bash
 pnpm run setup
@@ -26,13 +26,14 @@ pnpm config check
 ```
 
 Pass criteria:
-- `doctor` reports all checks as PASS.
+- `doctor` reports AppleScript and keystroke checks as PASS (Screen Studio check may be WARN if not installed).
 - `config check` reports expected runtime sources.
 - `setup` installs bundled skills for both Codex and Claude by default.
 
 Note:
-- `pnpm demo` runs Screen Studio preflight automatically.
-- Use `pnpm screenstudio-prep` only when diagnosing preflight failures.
+- `pnpm demo` runs recorder preflight automatically.
+- QuickTime is default; use `pnpm quicktime-prep` for QuickTime diagnostics.
+- Use `pnpm screenstudio-prep` only when diagnosing Screen Studio-specific failures.
 
 ## Step 2: generate `artifacts/flow.json` in agent environment
 
@@ -73,6 +74,7 @@ Pass criteria:
 ## Common blockers
 
 - Permission failures: rerun `pnpm run doctor` and approve macOS prompts.
+- QuickTime preflight failures: run `pnpm quicktime-prep` to inspect File menu actions directly.
 - Screen Studio preflight failures: run `pnpm screenstudio-prep` to inspect Record menu actions directly.
 - Health timeout: run `pnpm config show` and confirm `baseUrl`, `startCommand`, and `healthPath`.
 - Flow validation failures: rerun `pnpm validate -- --flow <path>` and fix missing required fields.

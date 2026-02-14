@@ -21,21 +21,23 @@ pnpm discover -- --out artifacts
 1. `run` / `demo`
 
 ```bash
-studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"]
+studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>]
 ```
 
 Optional per-run overrides:
 
 ```bash
-studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]
+studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]
 ```
 
 Behavior:
 - Auto-installs Playwright Chromium on first run if missing.
 - Ensures automation permissions.
-- Runs Screen Studio Record-menu preflight before execution.
+- Runs recorder preflight before execution.
+- Uses `quicktime` recorder backend by default.
 - In non-headless mode, launches browser maximized for cleaner capture framing.
 - Does not auto-export on completion; export runs only when flow includes explicit `recorder_export`.
+- Export markers are rejected unless intent explicitly asks for export, or `--allow-export true` is provided.
 - Validates provided flow artifact before execution.
 - Resolves runtime config from flags, config files, bootstrap report, and defaults.
 - Reuses an already-healthy app when possible; if app is not healthy and no `startCommand` resolves, run fails with guidance.
@@ -81,11 +83,22 @@ studioflow doctor
 ```
 
 Behavior:
-- Checks Screen Studio installation.
+- Checks Screen Studio installation (optional warning).
 - Checks AppleScript and keystroke automation access.
 - On failure, triggers permission prompts and opens system settings panes.
 
-6. `screenstudio-prep`
+6. `quicktime-prep`
+
+```bash
+studioflow quicktime-prep [--app-name "QuickTime Player"]
+```
+
+Behavior:
+- Ensures automation permissions.
+- Activates QuickTime Player and verifies the File menu includes `New Screen Recording`.
+- Intended for manual diagnostics; normal `run`/`demo` already performs this preflight.
+
+7. `screenstudio-prep`
 
 ```bash
 studioflow screenstudio-prep [--app-name "Screen Studio"]
@@ -96,7 +109,7 @@ Behavior:
 - Activates Screen Studio and verifies `Record` menu actions.
 - Intended for manual diagnostics; normal `run`/`demo` already performs this preflight.
 
-7. `list-flows`
+8. `list-flows`
 
 ```bash
 studioflow list-flows
@@ -105,7 +118,7 @@ studioflow list-flows
 Behavior:
 - Lists deterministic flows from registry.
 
-8. `setup`
+9. `setup`
 
 ```bash
 studioflow setup [--skip-skills] [--force-skills] [--skills-target <dir>] [--skills-agent <codex|claude|all>] [--codex-skills-target <dir>] [--claude-skills-target <dir>]
@@ -118,7 +131,7 @@ Behavior:
   - Claude: `$CLAUDE_HOME/skills` or `~/.claude/skills`
 - Runs non-blocking permission diagnostics and writes setup state.
 
-9. `install-skills`
+10. `install-skills`
 
 ```bash
 studioflow install-skills [--force] [--agent <codex|claude|all>] [--codex-target <dir>] [--claude-target <dir>] [--target <dir>]
@@ -129,18 +142,18 @@ Behavior:
 - Skips existing skills unless `--force` is set.
 - `--target` installs to one explicit directory (for custom environments); do not combine with agent-target flags.
 
-10. `config`
+11. `config`
 
 ```bash
-studioflow config show [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]
-studioflow config check [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]
+studioflow config show [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]
+studioflow config check [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]
 ```
 
 Behavior:
 - `show`: prints effective runtime configuration and source for each value.
 - `check`: validates configuration and prints warnings if startup hints are incomplete.
 
-11. `version` / `--version` / `-v`
+12. `version` / `--version` / `-v`
 
 ```bash
 studioflow version

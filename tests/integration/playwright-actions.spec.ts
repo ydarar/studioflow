@@ -10,9 +10,13 @@ describe.sequential("playwright action execution", () => {
   let page: Awaited<ReturnType<typeof startBrowser>>["page"];
   let runDir = "";
   const originalHeadless = process.env.STUDIOFLOW_HEADLESS;
+  const originalRenderCursor = process.env.STUDIOFLOW_RENDER_CURSOR;
+  const originalCursorTheme = process.env.STUDIOFLOW_CURSOR_THEME;
 
   beforeEach(async () => {
     process.env.STUDIOFLOW_HEADLESS = "true";
+    process.env.STUDIOFLOW_RENDER_CURSOR = "true";
+    process.env.STUDIOFLOW_CURSOR_THEME = "macos";
     const session = await startBrowser("http://localhost:4173");
     browser = session.browser;
     page = session.page;
@@ -23,6 +27,8 @@ describe.sequential("playwright action execution", () => {
   afterEach(async () => {
     await browser.close();
     process.env.STUDIOFLOW_HEADLESS = originalHeadless;
+    process.env.STUDIOFLOW_RENDER_CURSOR = originalRenderCursor;
+    process.env.STUDIOFLOW_CURSOR_THEME = originalCursorTheme;
     await fs.rm(runDir, { recursive: true, force: true });
   });
 
@@ -133,6 +139,105 @@ describe.sequential("playwright action execution", () => {
     );
 
     await expect(page.locator("h1").textContent()).resolves.toBe("StudioFlow");
+  });
+
+  it("uses the macos cursor overlay theme and waits for cursor movement completion", async () => {
+    await page.setContent(`
+      <main>
+        <button data-testid="left-button" style="margin-left: 30px; margin-top: 24px;">Left</button>
+        <button data-testid="right-button" style="margin-left: 520px; margin-top: 120px;">Right</button>
+      </main>
+    `);
+
+    const baseUrl = "http://localhost:4173";
+
+    await executeStep(
+      page,
+      {
+        id: "first-click",
+        action: "click",
+        target: '[data-testid="left-button"]',
+        preDelayMs: 0,
+        postDelayMs: 0,
+        dwellMs: 0,
+        highlightMs: 0,
+        mouseMoveMs: 220
+      },
+      runDir,
+      baseUrl
+    );
+
+    const moveStartedAt = Date.now();
+    await executeStep(
+      page,
+      {
+        id: "second-click",
+        action: "click",
+        target: '[data-testid="right-button"]',
+        preDelayMs: 0,
+        postDelayMs: 0,
+        dwellMs: 0,
+        highlightMs: 0,
+        mouseMoveMs: 220
+      },
+      runDir,
+      baseUrl
+    );
+    const elapsed = Date.now() - moveStartedAt;
+    expect(elapsed).toBeGreaterThanOrEqual(120);
+
+    const cursorDetails = await page.evaluate(() => {
+      const cursor = document.getElementById("studioflow-cursor");
+      if (!cursor) return null;
+      const style = getComputedStyle(cursor);
+      return {
+        theme: cursor.getAttribute("data-theme"),
+        opacity: style.opacity,
+        width: style.width,
+        height: style.height,
+        backgroundImage: style.backgroundImage
+      };
+    });
+
+    expect(cursorDetails).toBeTruthy();
+    expect(cursorDetails?.theme).toBe("macos");
+    expect(cursorDetails?.width).not.toBe("0px");
+    expect(cursorDetails?.height).not.toBe("0px");
+    expect(cursorDetails?.backgroundImage).toContain("data:image/png;base64");
+    expect(Number(cursorDetails?.opacity ?? "0")).toBeGreaterThan(0.9);
+  });
+
+  it("supports the generic cursor theme override", async () => {
+    process.env.STUDIOFLOW_CURSOR_THEME = "generic";
+    await page.setContent('<button data-testid="theme-button">Theme</button>');
+    await executeStep(
+      page,
+      {
+        id: "theme-click",
+        action: "click",
+        target: '[data-testid="theme-button"]',
+        preDelayMs: 0,
+        postDelayMs: 0,
+        dwellMs: 0,
+        highlightMs: 0,
+        mouseMoveMs: 120
+      },
+      runDir,
+      "http://localhost:4173"
+    );
+
+    const genericCursor = await page.evaluate(() => {
+      const cursor = document.getElementById("studioflow-cursor");
+      if (!cursor) return null;
+      const style = getComputedStyle(cursor);
+      return {
+        theme: cursor.getAttribute("data-theme"),
+        backgroundImage: style.backgroundImage
+      };
+    });
+
+    expect(genericCursor?.theme).toBe("generic");
+    expect(genericCursor?.backgroundImage).toContain("data:image/svg+xml");
   });
 
   it("throws clear errors for invalid step payloads and unsupported actions", async () => {

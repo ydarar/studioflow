@@ -2,13 +2,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import kleur from "kleur";
-import { runFlowFileCommand } from "./commands/run.js";
+import type { RecorderBackend } from "@studioflow/contracts";
+import { runFlowFileCommand, type RunCommandOptions } from "./commands/run.js";
 import { listFlowsCommand } from "./commands/list-flows.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { discoverCommand } from "./commands/discover.js";
 import { validateCommand } from "./commands/validate.js";
 import { bootstrapCommand } from "./commands/bootstrap.js";
 import { screenstudioPrepCommand } from "./commands/screenstudio-prep.js";
+import { quicktimePrepCommand } from "./commands/quicktime-prep.js";
 import { setupCommand } from "./commands/setup.js";
 import type { SkillsAgentSelection } from "./commands/install-skills.js";
 import { installSkillsCommand } from "./commands/install-skills.js";
@@ -53,6 +55,14 @@ function readFlagValue(args: string[], flag: string) {
   return value;
 }
 
+function parseRecorder(raw: string | undefined, flag: string): RecorderBackend | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === "quicktime" || raw === "screenstudio") {
+    return raw;
+  }
+  throw new Error(`Invalid ${flag} value: ${raw}. Expected quicktime or screenstudio.`);
+}
+
 function parseRuntimeConfigOverrides(args: string[]): RuntimeConfigOverrides {
   const headlessRaw = readFlagValue(args, "--headless");
 
@@ -62,7 +72,15 @@ function parseRuntimeConfigOverrides(args: string[]): RuntimeConfigOverrides {
     healthPath: readFlagValue(args, "--health-path"),
     bootstrapReportPath: readFlagValue(args, "--bootstrap-report"),
     runsDir: readFlagValue(args, "--runs-dir"),
+    recorder: parseRecorder(readFlagValue(args, "--recorder"), "--recorder"),
     headless: headlessRaw ? parseBoolean(headlessRaw, "--headless") : undefined
+  };
+}
+
+function parseRunCommandOptions(args: string[]): RunCommandOptions {
+  const allowExportRaw = readFlagValue(args, "--allow-export");
+  return {
+    allowExport: allowExportRaw ? parseBoolean(allowExportRaw, "--allow-export") : undefined
   };
 }
 
@@ -88,13 +106,14 @@ async function main() {
       const flowPath = readFlag(normalizedArgs, "--flow");
       if (!flowPath) {
         throw new Error(
-          'Usage: studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]'
+          'Usage: studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]'
         );
       }
 
       const sourceIntent = readFlag(normalizedArgs, "--intent") ?? "artifact flow";
       const runtimeOverrides = parseRuntimeConfigOverrides(normalizedArgs);
-      await runFlowFileCommand(flowPath, sourceIntent, runtimeOverrides);
+      const runOptions = parseRunCommandOptions(normalizedArgs);
+      await runFlowFileCommand(flowPath, sourceIntent, runtimeOverrides, runOptions);
       return;
     }
 
@@ -115,7 +134,7 @@ async function main() {
       }
 
       throw new Error(
-        "Usage: studioflow config <show|check> [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--bootstrap-report <path>] [--runs-dir <path>]"
+        "Usage: studioflow config <show|check> [--json] [--base-url <url>] [--start-command <command>] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]"
       );
     }
 
@@ -134,6 +153,12 @@ async function main() {
     if (command === "screenstudio-prep") {
       const appName = readFlag(normalizedArgs, "--app-name");
       await screenstudioPrepCommand(appName);
+      return;
+    }
+
+    if (command === "quicktime-prep") {
+      const appName = readFlag(normalizedArgs, "--app-name");
+      await quicktimePrepCommand(appName);
       return;
     }
 

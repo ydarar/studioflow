@@ -1,9 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { FlowDefinition, RunArtifactIndex } from "@studioflow/contracts";
+import type { FlowDefinition, RecorderBackend, RunArtifactIndex } from "@studioflow/contracts";
 import { appendJsonLine, createRunContext, writeJsonFile } from "@studioflow/artifacts";
 import { executeStep, startBrowser } from "@studioflow/adapters-playwright";
 import { exportRecording, startRecording, stopRecording } from "@studioflow/adapters-screenstudio";
+import {
+  exportQuickTimeRecording,
+  startQuickTimeRecording,
+  stopQuickTimeRecording
+} from "@studioflow/adapters-desktop";
 import { withRetry } from "./retry-policy.js";
 import type { EngineState } from "./state-machine.js";
 
@@ -13,11 +18,37 @@ export interface RunInput {
   startApp: () => Promise<() => Promise<void>>;
   baseUrl: string;
   headless?: boolean;
+  recorder?: RecorderBackend;
+}
+
+async function startRecorder(recorder: RecorderBackend) {
+  if (recorder === "screenstudio") {
+    await startRecording();
+    return;
+  }
+  await startQuickTimeRecording();
+}
+
+async function stopRecorder(recorder: RecorderBackend) {
+  if (recorder === "screenstudio") {
+    await stopRecording();
+    return;
+  }
+  await stopQuickTimeRecording();
+}
+
+async function exportRecorder(recorder: RecorderBackend) {
+  if (recorder === "screenstudio") {
+    await exportRecording();
+    return;
+  }
+  await exportQuickTimeRecording();
 }
 
 export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { runDir: string }> {
   const run = await createRunContext();
   let state: EngineState = "INIT";
+  const recorder = input.recorder ?? "screenstudio";
   const shouldExport = input.flows.some((flow) => flow.steps.some((step) => step.action === "recorder_export"));
   const files: Record<string, string> = {
     events: run.eventsFile
@@ -43,8 +74,8 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
 
     state = "START_RECORDER";
     await emit("recorder.start.begin");
-    await startRecording();
-    // Recording startup brings Screen Studio to foreground; return focus to the demo browser.
+    await startRecorder(recorder);
+    // Recorder startup can steal focus; return focus to the demo browser.
     await page.bringToFront();
     await emit("recorder.start.done");
 
@@ -73,13 +104,13 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
 
     state = "STOP_RECORDER";
     await emit("recorder.stop.begin");
-    await stopRecording();
+    await stopRecorder(recorder);
     await emit("recorder.stop.done");
 
     if (shouldExport) {
       state = "EXPORT";
       await emit("recorder.export.begin");
-      await exportRecording();
+      await exportRecorder(recorder);
       await emit("recorder.export.done");
     }
 

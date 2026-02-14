@@ -2,7 +2,7 @@
   "name": "studioflow-workspace",
   "private": true,
   "version": "0.1.0",
-  "description": "Deterministic AI-assisted product demo automation with Screen Studio",
+  "description": "Deterministic AI-assisted product demo automation with QuickTime and Screen Studio",
   "packageManager": "pnpm@10.28.2",
   "scripts": {
     "dev:sample": "pnpm --filter @studioflow/sample-app run dev",
@@ -13,6 +13,7 @@
     "install-skills": "pnpm --filter studioflow run install-skills --",
     "discover": "pnpm --filter studioflow run discover --",
     "bootstrap": "pnpm --filter studioflow run bootstrap --",
+    "quicktime-prep": "pnpm --filter studioflow run quicktime-prep --",
     "screenstudio-prep": "pnpm --filter studioflow run screenstudio-prep --",
     "validate": "pnpm --filter studioflow run validate --",
     "doctor": "pnpm --filter studioflow run doctor",

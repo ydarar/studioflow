@@ -11,11 +11,12 @@
   "version": 1,
   "intentSummary": "Record only onboarding + CRM in Demo Lab",
   "flowPath": "artifacts/flow.json",
+  "recorder": "screenstudio",
   "baseUrl": "http://localhost:4280",
   "startCommand": "pnpm dev:demo-lab",
   "healthPath": "/",
   "runtimePacing": {
-    "profile": "balanced",
+    "profile": "standard",
     "cursorMoveMs": 430,
     "cursorHighlightMs": 170,
     "typingDelayMs": 55,
@@ -33,18 +34,22 @@
 - `version`
 - `intentSummary`
 - `flowPath`
+- `recorder`
 - `baseUrl`
 - `healthPath`
 
 `startCommand` is recommended. If omitted, runtime can still proceed when app is already healthy.
-`runtimePacing` is optional for conversation-driven speed tuning.
+`recorder` values: `quicktime`, `screenstudio`. If missing, default to `quicktime`.
+When intent explicitly names recorder software, preserve that recorder in handoff and execution.
+`runtimePacing` should be present for investigate-generated handoff and should drive timing env vars directly.
+Use `runtimePacing.profile` values `fast`, `standard`, `cinematic`.
 
 ## Execution mapping
 
 From payload, execute:
 
 1. `pnpm validate -- --flow <flowPath>`
-2. `pnpm demo -- --flow <flowPath> --intent "<intentSummary>" --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>`
+2. `pnpm demo -- --flow <flowPath> --intent "<intentSummary>" --recorder <recorder> --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>`
 3. If `runtimePacing` exists, set mapped env vars on the `pnpm demo` command:
    - `STUDIOFLOW_CURSOR_MOVE_MS`
    - `STUDIOFLOW_CURSOR_HIGHLIGHT_MS`
@@ -53,5 +58,9 @@ From payload, execute:
    - `STUDIOFLOW_STEP_PRE_DELAY_MS`
    - `STUDIOFLOW_STEP_POST_DELAY_MS`
    - `STUDIOFLOW_STEP_DWELL_MS`
+
+Preflight diagnostics mapping:
+- `recorder=quicktime` -> `pnpm quicktime-prep`
+- `recorder=screenstudio` -> `pnpm screenstudio-prep`
 
 If payload is missing, fall back to explicit user arguments or repo defaults.
