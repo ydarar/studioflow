@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
+import { ensureCliArtifact } from "./helpers/ensure-cli-artifact";
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -42,10 +43,7 @@ async function runBuiltCli(args: string[]) {
 
 describe.sequential("built cli artifact", () => {
   it("builds and executes --version and -v directly from dist output", async () => {
-    await execFileAsync("pnpm", ["--filter", "studioflow", "run", "build"], {
-      cwd: rootDir,
-      env: process.env
-    });
+    await ensureCliArtifact(rootDir);
 
     const shebang = await fs.readFile(builtCliPath, "utf8");
     expect(shebang.startsWith("#!/usr/bin/env node\n")).toBe(true);

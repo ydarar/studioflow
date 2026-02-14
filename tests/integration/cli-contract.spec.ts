@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ensureCliArtifact } from "./helpers/ensure-cli-artifact";
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,30 +16,19 @@ function stripAnsi(text: string) {
   return text.replace(/\u001b\[[0-9;]*m/g, "");
 }
 
-function stripPnpmNoise(text: string) {
-  return text
-    .split("\n")
-    .filter((line) => !/\|\s*WARN\s+Unsupported platform:/.test(line))
-    .join("\n");
-}
-
 async function runCli(args: string[]) {
   try {
-    const result = await execFileAsync(
-      "pnpm",
-      ["--silent", "--filter", "studioflow", "exec", "tsx", "src/index.ts", ...args],
-      {
-        cwd: rootDir,
-        env: {
-          ...process.env,
-          STUDIOFLOW_DATA_DIR: dataDir
-        }
+    const result = await execFileAsync("node", ["apps/cli/dist/index.js", ...args], {
+      cwd: rootDir,
+      env: {
+        ...process.env,
+        STUDIOFLOW_DATA_DIR: dataDir
       }
-    );
+    });
     return {
       code: 0,
-      stdout: stripPnpmNoise(stripAnsi(result.stdout)),
-      stderr: stripPnpmNoise(stripAnsi(result.stderr))
+      stdout: stripAnsi(result.stdout),
+      stderr: stripAnsi(result.stderr)
     };
   } catch (error) {
     const failed = error as {
@@ -48,14 +38,15 @@ async function runCli(args: string[]) {
     };
     return {
       code: failed.code ?? 1,
-      stdout: stripPnpmNoise(stripAnsi(failed.stdout ?? "")),
-      stderr: stripPnpmNoise(stripAnsi(failed.stderr ?? ""))
+      stdout: stripAnsi(failed.stdout ?? ""),
+      stderr: stripAnsi(failed.stderr ?? "")
     };
   }
 }
 
 describe.sequential("cli command contracts", () => {
   beforeAll(async () => {
+    await ensureCliArtifact(rootDir);
     dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "studioflow-cli-contract-"));
   });
 
