@@ -47,6 +47,7 @@ export async function setupCommand(opts: SetupOptions = {}) {
           targetId: string;
           targetDir: string;
           installed: string[];
+          updated: string[];
           skipped: string[];
         }>;
       }
@@ -70,8 +71,11 @@ export async function setupCommand(opts: SetupOptions = {}) {
       if (target.installed.length > 0) {
         console.log(`- Installed (${label}): ${target.installed.join(", ")}`);
       }
+      if (target.updated.length > 0) {
+        console.log(`- Updated (${label}): ${target.updated.join(", ")}`);
+      }
       if (target.skipped.length > 0) {
-        console.log(kleur.yellow(`- Skipped (${label}, already present): ${target.skipped.join(", ")}`));
+        console.log(kleur.yellow(`- Skipped (${label}, up to date): ${target.skipped.join(", ")}`));
       }
     }
   }
@@ -107,6 +111,7 @@ export async function setupCommand(opts: SetupOptions = {}) {
             targetId: target.targetId,
             targetDir: target.targetDir,
             installed: target.installed,
+            updated: target.updated,
             skipped: target.skipped
           }))
         }
