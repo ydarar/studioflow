@@ -1,6 +1,6 @@
 {
   "name": "studioflow",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": false,
   "description": "Deterministic AI-assisted product demo automation CLI for Screen Studio workflows",
   "type": "module",
