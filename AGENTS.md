@@ -4,7 +4,7 @@ This document defines the single steel thread for StudioFlow. It is the primary 
 
 ## Steel Thread (North Star)
 
-StudioFlow exists to turn a plain-language demo request into a deterministic, recorded product demo through an agent-assisted authoring flow and a CLI execution flow.
+StudioFlow exists to turn a plain-language demo request into a deterministic, human-like recorded product demo through an agent-assisted authoring flow and a CLI execution flow.
 
 ### End-to-end journey
 
@@ -19,7 +19,7 @@ StudioFlow exists to turn a plain-language demo request into a deterministic, re
 
 ## Product Principle
 
-The CLI is a deterministic runtime for artifact execution. Intent interpretation and artifact generation happen in agent environments via StudioFlow skills.
+The CLI is a deterministic runtime for artifact execution and human-like demo playback. Intent interpretation and artifact generation happen in agent environments via StudioFlow skills.
 
 ## Decision Gate
 

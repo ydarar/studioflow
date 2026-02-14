@@ -7,11 +7,21 @@ function int(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function bool(value: string | undefined, fallback: boolean) {
+  if (!value) return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return fallback;
+}
+
 const preConfirmDelay = int(process.env.QUICKTIME_PRE_CONFIRM_DELAY_MS, 700);
 const postStartDelay = int(process.env.QUICKTIME_POST_START_DELAY_MS, 1200);
 const postStopDelay = int(process.env.QUICKTIME_POST_STOP_DELAY_MS, 900);
 const exportDialogConfirmDelay = int(process.env.QUICKTIME_EXPORT_DIALOG_CONFIRM_DELAY_MS, 900);
 const exportDelay = int(process.env.QUICKTIME_EXPORT_DELAY_MS, 2500);
+const fullScreenSelectDelay = int(process.env.QUICKTIME_FULL_SCREEN_SELECT_DELAY_MS, 160);
+const forceRecordEntireScreen = bool(process.env.QUICKTIME_FORCE_RECORD_ENTIRE_SCREEN, true);
 
 function quote(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -58,6 +68,23 @@ export function buildQuickTimeSaveShortcutScript() {
 
 export function buildPressReturnScript() {
   return 'tell application "System Events" to key code 36';
+}
+
+type ScreenshotToolbarControlRole = "button" | "checkbox";
+
+export function buildClickScreenshotToolbarControlScript(
+  role: ScreenshotToolbarControlRole,
+  controlName: string
+) {
+  return `tell application "System Events"
+  if exists process "Screenshot" then
+    tell process "Screenshot" to tell window 1 to click ${role} "${quote(controlName)}"
+  else if exists process "screencaptureui" then
+    tell process "screencaptureui" to tell window 1 to click ${role} "${quote(controlName)}"
+  else
+    error "Screenshot toolbar process not found."
+  end if
+end tell`;
 }
 
 export async function wait(ms: number) {
@@ -107,6 +134,19 @@ export async function pressReturn() {
   await runAppleScript(buildPressReturnScript());
 }
 
+export async function clickScreenshotToolbarControl(
+  role: ScreenshotToolbarControlRole,
+  controlName: string
+) {
+  await runAppleScript(buildClickScreenshotToolbarControlScript(role, controlName));
+}
+
+export async function startQuickTimeFullScreenCapture() {
+  await clickScreenshotToolbarControl("checkbox", "Record Entire Screen");
+  await wait(fullScreenSelectDelay);
+  await clickScreenshotToolbarControl("button", "Record");
+}
+
 export async function startQuickTimeRecording(appName = defaultQuickTimeAppName) {
   await activateQuickTime(appName);
   const items = await listQuickTimeFileMenuItems(appName);
@@ -119,6 +159,17 @@ export async function startQuickTimeRecording(appName = defaultQuickTimeAppName)
   }
 
   await wait(preConfirmDelay);
+
+  if (forceRecordEntireScreen) {
+    try {
+      await startQuickTimeFullScreenCapture();
+      await wait(postStartDelay);
+      return;
+    } catch {
+      // Fall back to legacy confirm in environments where toolbar controls are unavailable.
+    }
+  }
+
   await pressReturn();
   await wait(postStartDelay);
 }

@@ -154,6 +154,8 @@ export interface RuntimePacingDefaults {
   realisticTyping: boolean;
   typingDelayMs: number;
   clickPulseMs: number;
+  scrollAnimationMs: number;
+  scrollSettleMs: number;
   stepPreDelayMs: number;
   stepPostDelayMs: number;
   stepDwellMs: number;
@@ -170,6 +172,8 @@ export function resolveRuntimePacingDefaults(env: NodeJS.ProcessEnv = process.en
     realisticTyping: boolEnv("STUDIOFLOW_REALISTIC_TYPING", true, env),
     typingDelayMs: Math.max(0, intEnv("STUDIOFLOW_TYPING_DELAY_MS", 55, env)),
     clickPulseMs: Math.max(0, intEnv("STUDIOFLOW_CLICK_PULSE_MS", 220, env)),
+    scrollAnimationMs: Math.max(0, intEnv("STUDIOFLOW_SCROLL_ANIMATION_MS", 340, env)),
+    scrollSettleMs: Math.max(0, intEnv("STUDIOFLOW_SCROLL_SETTLE_MS", 180, env)),
     stepPreDelayMs: Math.max(0, intEnv("STUDIOFLOW_STEP_PRE_DELAY_MS", 90, env)),
     stepPostDelayMs: Math.max(0, intEnv("STUDIOFLOW_STEP_POST_DELAY_MS", 130, env)),
     stepDwellMs: Math.max(0, intEnv("STUDIOFLOW_STEP_DWELL_MS", 180, env)),
@@ -291,7 +295,8 @@ async function scrollTargetIntoView(
   page: Page,
   target: string,
   timeoutMs: number,
-  runtime: RuntimePacingDefaults
+  runtime: RuntimePacingDefaults,
+  context: StepExecutionContext = {}
 ) {
   const locator = page.locator(target).first();
   const snapshot = await collectTargetSnapshot(page, target);
@@ -300,12 +305,18 @@ async function scrollTargetIntoView(
   const effective = defaultScrollPlan;
   const needsScroll = snapshot.visible && (!snapshot.inViewport || snapshot.clippedByOverflow);
   if (!effective.required && !needsScroll) return;
+  const scrollAnimationMs = resolvePacedDelay(runtime.scrollAnimationMs, context, runtime, "scroll-motion");
+  const scrollSettleMs = resolvePacedDelay(runtime.scrollSettleMs, context, runtime, "scroll-settle", false);
 
   for (let attempt = 0; attempt < effective.maxAttempts; attempt += 1) {
     try {
       await locator.evaluate(
-        (element, alignment: ScrollAlignment) => {
-          const block = alignment === "start" || alignment === "center" || alignment === "end" ? alignment : "nearest";
+        (element, payload: { alignment: ScrollAlignment; smooth: boolean }) => {
+          const block =
+            payload.alignment === "start" || payload.alignment === "center" || payload.alignment === "end"
+              ? payload.alignment
+              : "nearest";
+          const behavior = payload.smooth ? "smooth" : "instant";
 
           let parent = element.parentElement;
           while (parent) {
@@ -318,38 +329,53 @@ async function scrollTargetIntoView(
             if (scrollableY || scrollableX) {
               const targetRect = element.getBoundingClientRect();
               const parentRect = parent.getBoundingClientRect();
+              let nextScrollTop = parent.scrollTop;
+              let nextScrollLeft = parent.scrollLeft;
 
               if (scrollableY) {
                 const offsetTop = targetRect.top - parentRect.top + parent.scrollTop;
                 if (block === "start") {
-                  parent.scrollTop = offsetTop - 8;
+                  nextScrollTop = offsetTop - 8;
                 } else if (block === "end") {
-                  parent.scrollTop = offsetTop - parent.clientHeight + targetRect.height + 8;
+                  nextScrollTop = offsetTop - parent.clientHeight + targetRect.height + 8;
                 } else if (block === "center") {
-                  parent.scrollTop = offsetTop - parent.clientHeight / 2 + targetRect.height / 2;
+                  nextScrollTop = offsetTop - parent.clientHeight / 2 + targetRect.height / 2;
                 } else if (targetRect.top < parentRect.top || targetRect.bottom > parentRect.bottom) {
-                  parent.scrollTop = offsetTop - parent.clientHeight / 2 + targetRect.height / 2;
+                  nextScrollTop = offsetTop - parent.clientHeight / 2 + targetRect.height / 2;
                 }
               }
 
               if (scrollableX) {
                 const offsetLeft = targetRect.left - parentRect.left + parent.scrollLeft;
-                parent.scrollLeft = offsetLeft - parent.clientWidth / 2 + targetRect.width / 2;
+                nextScrollLeft = offsetLeft - parent.clientWidth / 2 + targetRect.width / 2;
+              }
+
+              const didMoveY = Math.abs(nextScrollTop - parent.scrollTop) > 0.5;
+              const didMoveX = Math.abs(nextScrollLeft - parent.scrollLeft) > 0.5;
+              if (didMoveY || didMoveX) {
+                parent.scrollTo({
+                  top: nextScrollTop,
+                  left: nextScrollLeft,
+                  behavior
+                });
               }
             }
 
             parent = parent.parentElement;
           }
 
-          element.scrollIntoView({ behavior: "instant", block, inline: "nearest" });
+          element.scrollIntoView({ behavior, block, inline: "nearest" });
         },
-        effective.alignment
+        {
+          alignment: effective.alignment,
+          smooth: scrollAnimationMs > 0
+        }
       );
     } catch {
       return;
     }
 
-    const settleMs = Math.min(timeoutMs, Math.max(40, Math.round(runtime.stepPreDelayMs * 0.5)));
+    const settleMs = Math.min(timeoutMs, Math.max(60, Math.max(scrollSettleMs, Math.round(scrollAnimationMs * 0.75))));
     if (settleMs > 0) {
       await wait(settleMs);
     }
@@ -681,7 +707,7 @@ async function applyPreStepPacing(
   const shouldMoveCursor = ["click", "type"].includes(step.action) && Boolean(step.target);
   if (!shouldMoveCursor || !step.target) return;
 
-  await scrollTargetIntoView(page, step.target, timeout, runtime);
+  await scrollTargetIntoView(page, step.target, timeout, runtime, context);
 
   const center = await getTargetCenter(page, step.target);
   if (!center) return;
@@ -735,7 +761,7 @@ export async function executeStep(
 
   if (step.action === "click") {
     if (!step.target) throw new Error(`Step ${step.id} missing target`);
-    await scrollTargetIntoView(page, step.target, timeout, runtime);
+    await scrollTargetIntoView(page, step.target, timeout, runtime, context);
     await page.locator(step.target).first().click({ timeout });
     const pulseMs = resolvePacedDelay(runtime.clickPulseMs, context, runtime, "click", false);
     await clickPulse(page, runtime, pulseMs);
@@ -745,7 +771,7 @@ export async function executeStep(
 
   if (step.action === "type") {
     if (!step.target) throw new Error(`Step ${step.id} missing target`);
-    await scrollTargetIntoView(page, step.target, timeout, runtime);
+    await scrollTargetIntoView(page, step.target, timeout, runtime, context);
     const locator = page.locator(step.target).first();
     if (runtime.realisticTyping) {
       await locator.click({ timeout });
@@ -763,7 +789,7 @@ export async function executeStep(
 
   if (step.action === "wait_for") {
     if (step.target) {
-      await scrollTargetIntoView(page, step.target, timeout, runtime);
+      await scrollTargetIntoView(page, step.target, timeout, runtime, context);
       await page.locator(step.target).first().waitFor({ state: "visible", timeout });
       await applyPostStepPacing(step, context, runtime);
       return;
@@ -785,7 +811,7 @@ export async function executeStep(
 
   if (step.action === "assert_visible") {
     if (!step.target) throw new Error(`Step ${step.id} missing target`);
-    await scrollTargetIntoView(page, step.target, timeout, runtime);
+    await scrollTargetIntoView(page, step.target, timeout, runtime, context);
     await assertVisible(page, step.target, timeout);
     await applyPostStepPacing(step, context, runtime);
     return;

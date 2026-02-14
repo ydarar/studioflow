@@ -115,6 +115,7 @@ Source: `packages/adapters-playwright/src/actions.ts`
 
 - Pre-step pacing:
   - Optional `preDelayMs`.
+  - Target scrolling uses smooth animation by default (`STUDIOFLOW_SCROLL_ANIMATION_MS`, `STUDIOFLOW_SCROLL_SETTLE_MS`) instead of instant jumps.
   - Cursor move to selector center for `click`/`type`.
   - Optional highlight pause.
   - Runtime multiplier and deterministic jitter applied unless strict pacing is enabled.
@@ -148,5 +149,5 @@ Sources:
   - AppleScript accessibility
   - keystroke automation capability
 - Recorder control uses AppleScript against Screen Studio `Record` menu.
-- QuickTime recorder control uses AppleScript/shortcuts against QuickTime Player File menu and save flow.
+- QuickTime recorder control uses AppleScript/shortcuts against QuickTime Player File menu and save flow, and prefers explicit Screenshot toolbar selection of `Record Entire Screen` before starting.
 - Export currently triggers menu action and confirm keypress; output path is not programmatically captured.

@@ -13,6 +13,8 @@ describe("playwright runtime pacing defaults", () => {
       realisticTyping: true,
       typingDelayMs: 55,
       clickPulseMs: 220,
+      scrollAnimationMs: 340,
+      scrollSettleMs: 180,
       stepPreDelayMs: 90,
       stepPostDelayMs: 130,
       stepDwellMs: 180,
@@ -30,6 +32,8 @@ describe("playwright runtime pacing defaults", () => {
       STUDIOFLOW_REALISTIC_TYPING: "false",
       STUDIOFLOW_TYPING_DELAY_MS: "30",
       STUDIOFLOW_CLICK_PULSE_MS: "300",
+      STUDIOFLOW_SCROLL_ANIMATION_MS: "420",
+      STUDIOFLOW_SCROLL_SETTLE_MS: "240",
       STUDIOFLOW_STEP_PRE_DELAY_MS: "120",
       STUDIOFLOW_STEP_POST_DELAY_MS: "160",
       STUDIOFLOW_STEP_DWELL_MS: "210",
@@ -45,6 +49,8 @@ describe("playwright runtime pacing defaults", () => {
       realisticTyping: false,
       typingDelayMs: 30,
       clickPulseMs: 300,
+      scrollAnimationMs: 420,
+      scrollSettleMs: 240,
       stepPreDelayMs: 120,
       stepPostDelayMs: 160,
       stepDwellMs: 210,
@@ -57,6 +63,8 @@ describe("playwright runtime pacing defaults", () => {
     const resolved = resolveRuntimePacingDefaults({
       STUDIOFLOW_TYPING_DELAY_MS: "-1",
       STUDIOFLOW_CLICK_PULSE_MS: "-5",
+      STUDIOFLOW_SCROLL_ANIMATION_MS: "-10",
+      STUDIOFLOW_SCROLL_SETTLE_MS: "-15",
       STUDIOFLOW_STEP_PRE_DELAY_MS: "-20",
       STUDIOFLOW_STEP_POST_DELAY_MS: "-30",
       STUDIOFLOW_STEP_DWELL_MS: "-40"
@@ -64,6 +72,8 @@ describe("playwright runtime pacing defaults", () => {
 
     expect(resolved.typingDelayMs).toBe(0);
     expect(resolved.clickPulseMs).toBe(0);
+    expect(resolved.scrollAnimationMs).toBe(0);
+    expect(resolved.scrollSettleMs).toBe(0);
     expect(resolved.stepPreDelayMs).toBe(0);
     expect(resolved.stepPostDelayMs).toBe(0);
     expect(resolved.stepDwellMs).toBe(0);
