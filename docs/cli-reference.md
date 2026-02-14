@@ -14,7 +14,8 @@ pnpm discover -- --out artifacts
 - Default command is `run` if no command is provided.
 - `run` and `demo` are aliases.
 - Runtime execution is artifact-only. `--flow` is required.
-- Natural-language open intent should be resolved in agent skill workflow (`studioflow-investigate`) before CLI execution.
+- Natural-language demo intent should be resolved in agent skill workflow (`studioflow-investigate`) before CLI execution.
+- `studioflow-investigate` is the intake/router skill and decides whether to execute existing artifacts or invoke `studioflow-author`.
 
 ## Commands
 
@@ -138,7 +139,7 @@ studioflow install-skills [--force] [--agent <codex|claude|all>] [--codex-target
 ```
 
 Behavior:
-- Copies bundled skills (`studioflow-cli`, `studioflow-investigate`) into both Codex and Claude skills directories by default.
+- Copies bundled skills (`studioflow-investigate`, `studioflow-author`, `studioflow-cli`) into both Codex and Claude skills directories by default.
 - Skips existing skills unless `--force` is set.
 - `--target` installs to one explicit directory (for custom environments); do not combine with agent-target flags.
 

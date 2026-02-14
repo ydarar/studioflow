@@ -4,7 +4,7 @@ StudioFlow turns a plain-language demo request into a deterministic recorded run
 
 This package includes:
 - a CLI runtime (`studioflow`) for deterministic artifact execution
-- bundled agent skills for Codex and Claude (`studioflow-investigate`, `studioflow-cli`)
+- bundled agent skills for Codex and Claude (`studioflow-investigate`, `studioflow-author`, `studioflow-cli`)
 
 ## Requirements
 
@@ -58,10 +58,9 @@ Record a demo for onboarding and billing.
 ```
 
 3. StudioFlow skills + CLI handle the rest:
-- investigate the codebase
-- generate deterministic artifacts (`artifacts/flow.json`, related context artifacts)
-- validate the flow
-- execute recording through the CLI runtime
+- clarify intent + route (`studioflow-investigate`)
+- create/repair deterministic artifacts when needed (`studioflow-author`)
+- execute deterministic recording (`studioflow-cli`)
 
 `run`/`demo` automatically performs recorder preflight checks. QuickTime is the default backend; use `--recorder screenstudio` to opt into Screen Studio.
 Headed runs auto-open a maximized browser window for cleaner recording composition.

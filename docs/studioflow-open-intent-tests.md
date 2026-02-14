@@ -1,6 +1,6 @@
 # StudioFlow Open-Intent Test Matrix
 
-Use this matrix to evaluate the `studioflow-investigate` clarification loop for ambiguous user intent.
+Use this matrix to evaluate `studioflow-investigate` as the intake/router skill for ambiguous user intent.
 
 ## Goal
 
@@ -11,7 +11,8 @@ Achieve reliable intent-to-flow mapping for most open intents without over-quest
 - Max 2 clarification rounds.
 - 1-3 follow-up questions per round (adaptive).
 - Generate best-effort deterministic flow when details remain sparse.
-- Include assumptions and confidence in handoff.
+- Include assumptions and confidence in routing summary.
+- Emit `artifacts/intent-fit-report.json` with route decision.
 
 ## Core scenarios
 
@@ -54,12 +55,14 @@ Achieve reliable intent-to-flow mapping for most open intents without over-quest
 - >=80% of open-intent cases produce acceptable deterministic flows.
 - Average clarification burden <=4 total questions.
 - No increase in flow validation failure rate for generated artifacts.
+- Routing decision accuracy (`execute-existing|patch-existing|create-new`) remains high.
 
 ## Suggested command sequence
 
 ```bash
-# use studioflow-investigate to generate artifacts/flow.json
+# use studioflow-investigate to produce intent-fit-report + routing
+# use studioflow-author when route is patch-existing/create-new
 pnpm validate -- --flow artifacts/flow.json
 ```
 
-The skill should auto-collect context artifacts before writing `flow.json`; validation confirms output quality.
+When routed to authoring, the author skill should auto-collect context artifacts before writing `flow.json`; validation confirms output quality.

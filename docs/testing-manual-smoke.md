@@ -19,8 +19,9 @@ Do not use this doc for initial environment setup. Use `docs/day0-runbook.md` fo
 1. Agent artifact handoff is ready.
 
 ```bash
-# generate artifacts/flow.json in Codex or Claude skill workflow
-# studioflow-investigate auto-generates context artifacts
+# run intake/router in Codex or Claude skill workflow
+# studioflow-investigate decides execute-existing vs patch/create
+# studioflow-author generates context artifacts when needed
 pnpm validate -- --flow artifacts/flow.json
 ```
 

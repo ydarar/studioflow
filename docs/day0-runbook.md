@@ -39,25 +39,30 @@ Note:
 
 StudioFlow CLI does not convert intent text into flows.
 Use Codex or Claude with StudioFlow skills to produce a deterministic flow artifact from user intent.
-`studioflow-investigate` automatically collects project context artifacts before writing `flow.json`.
+`studioflow-investigate` is the intake/router skill:
+- clarifies intent anchors
+- decides whether existing artifacts already fit
+- routes to `studioflow-author` when creation/repair is needed
 
 For open intent, `studioflow-investigate` should run a short clarification loop:
 - max 2 rounds
 - 1-3 high-impact questions per round
-- fallback to best-effort deterministic flow with assumptions when details stay sparse
+- fallback to best-effort route decision with assumptions when details stay sparse
 
 Recommended handoff to agent:
 
 ```bash
 I want to record a demo doing onboarding and billing.
-Explore this repo and generate artifacts/flow.json for StudioFlow CLI execution.
+Figure out whether existing artifacts already fit this intent; if not, generate/update artifacts and run it.
 ```
 
 Required output:
-- `artifacts/bootstrap.json`
-- `artifacts/structure-report.json`
-- `artifacts/navigation-graph.json`
-- `artifacts/flow.json`
+- `artifacts/intent-fit-report.json`
+- and, when routing requires authoring:
+  - `artifacts/bootstrap.json`
+  - `artifacts/structure-report.json`
+  - `artifacts/navigation-graph.json`
+  - `artifacts/flow.json`
 
 ## Step 3: validate flow and execute
 
