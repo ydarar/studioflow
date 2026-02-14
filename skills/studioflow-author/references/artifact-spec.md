@@ -42,6 +42,6 @@ Recorder note:
 - Without `recorder_export`, StudioFlow stops recording and completes the run without export.
 - Recorder software selection is not encoded in `flow.json`; include it in `studioflow-cli-handoff.json` as `recorder`.
 
-## Open-intent fallback note
+## Fallback note
 
-When the user intent remains open after clarification rounds, the assistant should still generate deterministic `flow.json` and include assumptions + confidence in the response handoff.
+When clarification inputs remain incomplete, still generate deterministic `flow.json` and include assumptions + confidence in handoff summary.

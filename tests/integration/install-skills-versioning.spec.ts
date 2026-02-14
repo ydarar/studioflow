@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { installBundledSkills } from "../../apps/cli/src/commands/install-skills.ts";
 
-const skillNames = ["studioflow-cli", "studioflow-investigate"] as const;
+const skillNames = ["studioflow-cli", "studioflow-investigate", "studioflow-author"] as const;
 const metadataFile = ".studioflow-skill.json";
 const previousSkillSource = process.env.STUDIOFLOW_SKILLS_SOURCE;
 const tempDirs: string[] = [];
@@ -52,7 +52,8 @@ describe.sequential("install skills version-aware sync", () => {
       generatedAt: "2026-02-14T00:00:00.000Z",
       skills: {
         "studioflow-cli": { hash: "cli-hash" },
-        "studioflow-investigate": { hash: "investigate-hash" }
+        "studioflow-investigate": { hash: "investigate-hash" },
+        "studioflow-author": { hash: "author-hash" }
       }
     });
 
@@ -76,6 +77,16 @@ describe.sequential("install skills version-aware sync", () => {
       installedAt: "2026-02-13T00:00:00.000Z"
     });
 
+    const authorSkillDir = path.join(targetDir, "studioflow-author");
+    await fs.mkdir(authorSkillDir, { recursive: true });
+    await fs.writeFile(path.join(authorSkillDir, "SKILL.md"), "# studioflow-author existing", "utf8");
+    await writeJson(path.join(authorSkillDir, metadataFile), {
+      packageName: "studioflow",
+      cliVersion: "9.9.9",
+      skillHash: "author-hash",
+      installedAt: "2026-02-13T00:00:00.000Z"
+    });
+
     process.env.STUDIOFLOW_SKILLS_SOURCE = sourceDir;
 
     const result = await installBundledSkills({
@@ -85,7 +96,7 @@ describe.sequential("install skills version-aware sync", () => {
     expect(result.targets).toHaveLength(1);
     expect(result.targets[0]?.installed).toEqual([]);
     expect(result.targets[0]?.updated).toEqual(["studioflow-investigate"]);
-    expect(result.targets[0]?.skipped).toEqual(["studioflow-cli"]);
+    expect(result.targets[0]?.skipped).toEqual(["studioflow-cli", "studioflow-author"]);
 
     const upToDateSkillContents = await fs.readFile(path.join(upToDateSkillDir, "SKILL.md"), "utf8");
     expect(upToDateSkillContents).toContain("existing");

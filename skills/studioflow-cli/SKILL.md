@@ -7,12 +7,27 @@ description: Execute validated demo artifacts with StudioFlow CLI. Use when the 
 
 Run validated artifacts through deterministic execution.
 
+## Sandbox Escalation (Required)
+
+When executing StudioFlow CLI commands from Codex tool environments, run the commands below with `sandbox_permissions: require_escalated` on the first attempt. Do not run them in sandbox first and retry after failure.
+
+- `pnpm install` (when dependencies are missing)
+- `pnpm run setup`
+- `pnpm run doctor`
+- `pnpm quicktime-prep`
+- `pnpm screenstudio-prep`
+- `pnpm validate -- --flow <flowPath>`
+- `pnpm demo -- --flow <flowPath> --intent "<intent-summary>" --recorder <recorder> --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>`
+
+Reason: these commands can require network access, local IPC sockets (`tsx`), GUI automation, recorder control, and app process orchestration that are commonly blocked in sandboxed execution.
+
 ## Workflow
 
 0. Resolve handoff input (if present):
 - `artifacts/studioflow-cli-handoff.json`
 
 If handoff exists, use it as the source of truth for `flowPath`, `intentSummary`, `baseUrl`, `startCommand`, and `healthPath`.
+Handoff may be produced by `studioflow-author`, or reused by `studioflow-investigate` when routing to execute-existing.
 If handoff includes `recorder`, treat it as source of truth and preserve explicit user recorder choice.
 If present, also consume `runtimePacing` from handoff for runtime timing env values.
 

@@ -1,6 +1,6 @@
 # Handoff Input Spec
 
-`studioflow-cli` accepts a runtime handoff file from `studioflow-investigate`:
+`studioflow-cli` accepts a runtime handoff file from `studioflow-author` (or from `studioflow-investigate` when reusing existing artifacts):
 
 - `artifacts/studioflow-cli-handoff.json`
 

@@ -6,7 +6,7 @@ import kleur from "kleur";
 import { getClaudeSkillsDir, getCodexSkillsDir } from "./runtime-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const bundledSkillNames = ["studioflow-cli", "studioflow-investigate"] as const;
+const bundledSkillNames = ["studioflow-cli", "studioflow-investigate", "studioflow-author"] as const;
 const skillManifestFile = "manifest.json";
 const skillMetadataFile = ".studioflow-skill.json";
 const packageName = "studioflow";

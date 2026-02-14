@@ -16,12 +16,15 @@ describe("studioflow-investigate clarification contract", () => {
 
     expect(skill).toContain("Max 2 rounds.");
     expect(skill).toContain("Ask 1-3 questions per round");
-    expect(skill).toContain("best-effort flow with explicit assumptions");
+    expect(skill).toContain("best-effort");
+    expect(skill).toContain("artifacts/intent-fit-report.json");
+    expect(skill).toContain("execute-existing");
+    expect(skill).toContain("patch-existing");
+    expect(skill).toContain("create-new");
     expect(skill).toContain("references/question-card-spec.md");
     expect(skill).toContain("references/clarification-state.md");
-    expect(skill).toContain("Do not ask the user to run these commands manually.");
+    expect(skill).toContain("references/artifact-fit-spec.md");
     expect(skill).toContain("Infer run feel and pacing automatically");
-    expect(skill).toContain("Always include `runtimePacing` in handoff");
   });
 
   it("includes question-card and clarification-state reference files", async () => {

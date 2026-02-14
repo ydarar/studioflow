@@ -1,37 +1,15 @@
 ---
 name: studioflow-investigate
-description: Investigate an arbitrary web project and generate deterministic StudioFlow artifacts. Use when the user asks to discover app structure, map routes/components/actions, synthesize artifacts/flow.json from natural-language intent, or clarify open/ambiguous intent before authoring a flow.
+description: Intake and route StudioFlow demo requests. Use when the user asks to run or record a demo from natural language and you must (1) clarify intent anchors, (2) decide whether existing artifacts already fit the request, and (3) route to `studioflow-author` (create/repair) or `studioflow-cli` (execute existing artifacts).
 ---
 
 # StudioFlow Investigate
 
-Generate deterministic demo-planning artifacts for any web app.
+Resolve intent and route execution to the right downstream skill.
 
 ## Workflow
 
-1. Inspect project root and identify framework, package manager, and startup command.
-2. Always collect project context artifacts before intent mapping.
-
-Do this automatically in the skill workflow. Do not ask the user to run these commands manually.
-
-```bash
-pnpm bootstrap -- --out artifacts/bootstrap.json
-pnpm discover -- --out artifacts
-```
-
-Fallback if `pnpm` workspace scripts are unavailable:
-
-```bash
-studioflow bootstrap --out artifacts/bootstrap.json
-studioflow discover --out artifacts
-```
-
-3. Review generated artifacts:
-- `artifacts/bootstrap.json`
-- `artifacts/structure-report.json`
-- `artifacts/navigation-graph.json`
-
-4. Resolve intent specificity before authoring `artifacts/flow.json`.
+1. Resolve intent specificity first.
 
 Open-intent detection:
 - Treat intent as open when one or more anchors are missing:
@@ -55,54 +33,53 @@ Clarification loop:
 - If host supports structured question-card requests, emit payloads from `references/question-card-spec.md`.
 - If structured cards are not supported, ask equivalent plain-language questions.
 - Track known/missing fields using `references/clarification-state.md`.
+- If anchors remain unclear after round 2, make a best-effort route decision with explicit assumptions.
 
-5. Author `artifacts/flow.json` from intent + discovered structure + clarified answers.
+2. Evaluate current artifact readiness after clarification.
 
-Rules for authored flow:
-- Deterministic steps only.
-- Prefer stable selectors (`data-testid`).
-- Include clear step IDs and assertions at key transitions.
-- Always synthesize pacing fields (`preDelayMs`, `postDelayMs`, `mouseMoveMs`, `highlightMs`, `dwellMs`) for interaction-heavy steps to keep demos human-looking.
-- Model scroll risk during authoring. For below-fold or overflow-container targets, add stable preconditions (`wait_for` on section/container) before interaction steps.
-- Add `recorder_export` only when the user explicitly asks for export at run completion.
-- If clarification remains incomplete after 2 rounds, generate best-effort flow with explicit assumptions.
+Check for:
+- `artifacts/flow.json`
+- optional `artifacts/studioflow-cli-handoff.json`
+- optional `artifacts/bootstrap.json`
+- optional `artifacts/structure-report.json`
+- optional `artifacts/navigation-graph.json`
 
-6. Validate candidate flow:
+3. Run intent-to-artifact fit evaluation using `references/artifact-fit-spec.md`.
 
-```bash
-pnpm validate -- --flow artifacts/flow.json
-```
+Classify route:
+- `execute-existing`: artifacts are present and intent fit is high enough to run safely.
+- `patch-existing`: artifacts exist but require targeted edits.
+- `create-new`: artifacts are missing or intent fit is low.
 
-7. If validation fails, edit flow actions/selectors and rerun validation.
+Write decision trace to:
+- `artifacts/intent-fit-report.json`
 
-8. Emit deterministic runtime handoff for `studioflow-cli`.
+4. Route deterministically based on classification.
 
-Write `artifacts/studioflow-cli-handoff.json` using `references/cli-handoff-spec.md`.
-- Always include `runtimePacing` in handoff, inferred from authored flow pacing and intent.
-- Always include `recorder` in handoff (`quicktime` or `screenstudio`), resolved from intent wording + defaults.
+- For `execute-existing`:
+  - Invoke `studioflow-cli` immediately with existing artifacts and handoff/default runtime anchors.
+- For `patch-existing` or `create-new`:
+  - Invoke `studioflow-author` to create/repair deterministic artifacts for this intent.
+  - After `studioflow-author` completes, invoke `studioflow-cli` in the same turn.
 
-9. Hand off execution to `studioflow-cli` immediately.
+5. Do not stop at command suggestions when the user asked to run/record a demo.
 
-- If your host supports explicit skill invocation, invoke `studioflow-cli` in the same turn using the handoff payload.
-- If explicit skill invocation is unavailable, execute the equivalent CLI run workflow directly in the same turn.
-- Do not stop at "here is the command to run" when the user intent is to run/record a demo.
+- If your host supports explicit skill invocation, invoke downstream skills directly.
+- If explicit invocation is unavailable, execute equivalent workflows directly.
 
 ## Output Requirements
 
-Always produce these files for handoff to runtime execution:
-1. `artifacts/bootstrap.json`
-2. `artifacts/structure-report.json`
-3. `artifacts/navigation-graph.json`
-4. `artifacts/flow.json`
-5. `artifacts/studioflow-cli-handoff.json`
+Always produce:
+1. `artifacts/intent-fit-report.json`
+2. concise route decision (`execute-existing|patch-existing|create-new`)
 
 Always include a concise handoff summary in the response:
 - resolved intent anchors
+- route decision and reason
 - unresolved assumptions (if any)
 - confidence (`high|medium|low`)
 
 Use references in:
-- `references/artifact-spec.md`
 - `references/question-card-spec.md`
 - `references/clarification-state.md`
-- `references/cli-handoff-spec.md`
+- `references/artifact-fit-spec.md`

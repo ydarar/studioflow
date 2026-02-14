@@ -1,6 +1,6 @@
 # CLI Handoff Spec
 
-Use this artifact when `studioflow-investigate` routes execution with an existing flow and needs to hand to `studioflow-cli` without re-authoring.
+Use this artifact to hand execution from `studioflow-author` to `studioflow-cli`.
 
 Path:
 
@@ -51,10 +51,10 @@ Path:
 
 ## Invocation contract
 
-When handoff artifact is written, immediately invoke `studioflow-cli` (or equivalent runtime workflow in same agent) to execute:
+When handoff artifact is written and the user asked to run/record now, invoke `studioflow-cli` (or equivalent runtime workflow in same agent) to execute:
 
 1. `pnpm validate -- --flow <flowPath>`
 2. `pnpm demo -- --flow <flowPath> --intent "<intentSummary>" --recorder <recorder> --base-url <baseUrl> --start-command "<startCommand>" --health-path <healthPath>`
 3. Set matching `STUDIOFLOW_*` env vars from `runtimePacing` on the demo command.
 
-Do not ask the user to translate the handoff into commands.
+Do not ask the user to translate handoff into commands.
