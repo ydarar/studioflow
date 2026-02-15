@@ -88,6 +88,7 @@ describe.sequential("orchestrator engine", () => {
     };
 
     const page = {
+      goto: vi.fn(async () => {}),
       bringToFront: vi.fn(),
       screenshot: vi.fn(async () => {})
     };
@@ -270,5 +271,25 @@ describe.sequential("orchestrator engine", () => {
     expect(startRecordingMock).not.toHaveBeenCalled();
     expect(stopRecordingMock).not.toHaveBeenCalled();
     expect(exportRecordingMock).not.toHaveBeenCalled();
+  });
+
+  it("preloads the first goto route before recorder starts", async () => {
+    executeStepMock.mockResolvedValue(undefined);
+    const closeApp = vi.fn(async () => {});
+    const { runEngine } = await import("../../packages/orchestrator/src/engine.ts");
+
+    await runEngine({
+      intent: "billing flow",
+      flows: [makeFlow({ action: "goto", value: "/billing" })],
+      baseUrl: "http://localhost:4173",
+      startApp: async () => closeApp
+    });
+
+    const { page } = await startBrowserMock.mock.results[0].value;
+    expect(page.goto).toHaveBeenCalledWith("http://localhost:4173/billing", {
+      waitUntil: "domcontentloaded",
+      timeout: 15_000
+    });
+    expect(page.goto.mock.invocationCallOrder[0]).toBeLessThan(startRecordingMock.mock.invocationCallOrder[0]);
   });
 });

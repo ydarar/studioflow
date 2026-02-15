@@ -28,7 +28,7 @@ studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-exp
 Optional per-run overrides:
 
 ```bash
-studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]
+studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--allow-unsafe-start-command <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]
 ```
 
 Behavior:
@@ -39,6 +39,8 @@ Behavior:
 - In non-headless mode, launches browser maximized for cleaner capture framing.
 - Does not auto-export on completion; export runs only when flow includes explicit `recorder_export`.
 - Export markers are rejected unless intent explicitly asks for export, or `--allow-export true` is provided.
+- Start commands are restricted to package-manager script execution by default (for example `pnpm run dev:sample`, `npm run dev`, `yarn run dev`).
+- Non-script start commands are blocked unless `--allow-unsafe-start-command true` is provided.
 - Validates provided flow artifact before execution.
 - Resolves runtime config from flags, config files, bootstrap report, and defaults.
 - Reuses an already-healthy app when possible; if app is not healthy and no `startCommand` resolves, run fails with guidance.
@@ -136,12 +138,14 @@ Behavior:
 
 ```bash
 studioflow install-skills [--force] [--agent <codex|claude|all>] [--codex-target <dir>] [--claude-target <dir>] [--target <dir>]
+studioflow install-skills [--force] [--agent <codex|claude|all>] [--codex-target <dir>] [--claude-target <dir>] [--target <dir>] [--source <dir> --allow-external-source]
 ```
 
 Behavior:
 - Copies bundled skills (`studioflow-investigate`, `studioflow-author`, `studioflow-cli`) into both Codex and Claude skills directories by default.
 - Skips existing skills unless `--force` is set.
 - `--target` installs to one explicit directory (for custom environments); do not combine with agent-target flags.
+- External skill sources require explicit opt-in with both `--source` and `--allow-external-source`.
 
 11. `config`
 

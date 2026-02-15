@@ -21,8 +21,9 @@ Supported keys in `.studioflow/config.json` and `~/.studioflow/config.json`:
   - Default: `http://localhost:4173`
 
 - `startCommand` (string)
-  - Example: `"pnpm dev"`
+  - Example: `"pnpm run dev:sample"`
   - Default: unset (runs rely on app already healthy unless bootstrap/flag provides command)
+  - Security default: command must resolve to a package-manager script in workspace `package.json` unless unsafe override is enabled.
 
 - `healthPath` (string)
   - Example: `"/api/health"`
@@ -49,7 +50,7 @@ Example project config:
 ```json
 {
   "baseUrl": "http://localhost:3000",
-  "startCommand": "pnpm dev",
+  "startCommand": "pnpm run dev:sample",
   "healthPath": "/api/health",
   "headless": false,
   "recorder": "quicktime",
@@ -63,6 +64,7 @@ Example project config:
 
 - `--base-url <url>`
 - `--start-command <command>`
+- `--allow-unsafe-start-command <true|false>`
 - `--health-path <path>`
 - `--headless <true|false>`
 - `--recorder <quicktime|screenstudio>`
@@ -90,6 +92,10 @@ These are optional advanced controls still read directly from environment:
   - Data root for user flow files, user config, and setup state.
   - Default: `~/.studioflow`
 
+- `STUDIOFLOW_ALLOW_UNSAFE_START_COMMAND`
+  - Set to `true` to allow raw `startCommand` execution outside package-manager script forms.
+  - Default: `false`
+
 - `CODEX_HOME`
   - Skill installation base.
   - Default: `~/.codex`
@@ -97,9 +103,6 @@ These are optional advanced controls still read directly from environment:
 - `CLAUDE_HOME`
   - Claude skill installation base.
   - Default: `~/.claude`
-
-- `STUDIOFLOW_SKILLS_SOURCE`
-  - Override source location for bundled skills during install.
 
 - `SCREENSTUDIO_APP_NAME`
 - `SCREENSTUDIO_PRE_CONFIRM_DELAY_MS`
@@ -126,6 +129,7 @@ These are optional advanced controls still read directly from environment:
 - `STUDIOFLOW_REALISTIC_TYPING`
 - `STUDIOFLOW_TYPING_DELAY_MS`
 - `STUDIOFLOW_CLICK_PULSE_MS`
+- `STUDIOFLOW_SCREENSHOT_FULL_PAGE`
 - `STUDIOFLOW_SCROLL_ANIMATION_MS`
 - `STUDIOFLOW_SCROLL_SETTLE_MS`
 - `STUDIOFLOW_STEP_PRE_DELAY_MS`
@@ -144,6 +148,7 @@ Default pacing profile (when step-level pacing fields are not provided):
 - `STUDIOFLOW_CURSOR_HIGHLIGHT_MS=170`
 - `STUDIOFLOW_TYPING_DELAY_MS=55`
 - `STUDIOFLOW_CLICK_PULSE_MS=220`
+- `STUDIOFLOW_SCREENSHOT_FULL_PAGE=false`
 - `STUDIOFLOW_SCROLL_ANIMATION_MS=340`
 - `STUDIOFLOW_SCROLL_SETTLE_MS=180`
 - `STUDIOFLOW_STEP_PRE_DELAY_MS=90`

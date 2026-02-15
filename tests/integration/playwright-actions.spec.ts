@@ -141,6 +141,39 @@ describe.sequential("playwright action execution", () => {
     await expect(page.locator("h1").textContent()).resolves.toBe("StudioFlow");
   });
 
+  it("skips reload when goto target already matches current URL", async () => {
+    const dataUrl =
+      "data:text/html,<html><body><h1>StudioFlow</h1><script>window.__reloadCount=(window.__reloadCount||0)+1;</script></body></html>";
+    await executeStep(
+      page,
+      {
+        id: "goto-first",
+        action: "goto",
+        value: dataUrl
+      },
+      runDir,
+      "http://localhost:4173"
+    );
+
+    await page.evaluate(() => {
+      (window as any).__reloadCount = 99;
+    });
+
+    await executeStep(
+      page,
+      {
+        id: "goto-same",
+        action: "goto",
+        value: dataUrl
+      },
+      runDir,
+      "http://localhost:4173"
+    );
+
+    const reloadCount = await page.evaluate(() => (window as any).__reloadCount);
+    expect(reloadCount).toBe(99);
+  });
+
   it("uses the macos cursor overlay theme and waits for cursor movement completion", async () => {
     await page.setContent(`
       <main>

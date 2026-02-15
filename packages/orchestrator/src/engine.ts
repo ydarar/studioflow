@@ -72,6 +72,20 @@ export async function runEngine(input: RunInput): Promise<RunArtifactIndex & { r
     closeApp = await input.startApp();
     await emit("start_app.done");
 
+    // Preload the initial route before recording so capture does not start on a blank tab.
+    const firstStep = input.flows[0]?.steps[0];
+    const firstRouteTarget =
+      firstStep?.action === "goto" ? (firstStep.value?.trim().length ? firstStep.value.trim() : "/") : null;
+    const preloadUrl =
+      firstRouteTarget && /^https?:\/\//.test(firstRouteTarget)
+        ? firstRouteTarget
+        : new URL(firstRouteTarget ?? "/", input.baseUrl).toString();
+    try {
+      await page.goto(preloadUrl, { waitUntil: "domcontentloaded", timeout: 15_000 });
+    } catch {
+      // Best effort only; keep run behavior unchanged if preload cannot complete.
+    }
+
     state = "START_RECORDER";
     await emit("recorder.start.begin");
     await startRecorder(recorder);

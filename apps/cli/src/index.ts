@@ -73,8 +73,12 @@ function parseRuntimeConfigOverrides(args: string[]): RuntimeConfigOverrides {
 
 function parseRunCommandOptions(args: string[]): RunCommandOptions {
   const allowExportRaw = readFlagValue(args, "--allow-export");
+  const allowUnsafeStartCommandRaw = readFlagValue(args, "--allow-unsafe-start-command");
   return {
-    allowExport: allowExportRaw ? parseBoolean(allowExportRaw, "--allow-export") : undefined
+    allowExport: allowExportRaw ? parseBoolean(allowExportRaw, "--allow-export") : undefined,
+    allowUnsafeStartCommand: allowUnsafeStartCommandRaw
+      ? parseBoolean(allowUnsafeStartCommandRaw, "--allow-unsafe-start-command")
+      : undefined
   };
 }
 
@@ -100,7 +104,7 @@ async function main() {
       const flowPath = readFlagValue(normalizedArgs, "--flow");
       if (!flowPath) {
         throw new Error(
-          'Usage: studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]'
+          'Usage: studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--allow-unsafe-start-command <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]'
         );
       }
 
@@ -174,7 +178,9 @@ async function main() {
         targetDir: readFlagValue(normalizedArgs, "--target"),
         agent: parseSkillsAgent(readFlagValue(normalizedArgs, "--agent"), "--agent"),
         codexTargetDir: readFlagValue(normalizedArgs, "--codex-target"),
-        claudeTargetDir: readFlagValue(normalizedArgs, "--claude-target")
+        claudeTargetDir: readFlagValue(normalizedArgs, "--claude-target"),
+        sourceDir: readFlagValue(normalizedArgs, "--source"),
+        allowExternalSource: hasFlag(normalizedArgs, "--allow-external-source")
       });
       return;
     }

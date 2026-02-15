@@ -6,7 +6,6 @@ import { installBundledSkills } from "../../apps/cli/src/commands/install-skills
 
 const skillNames = ["studioflow-cli", "studioflow-investigate", "studioflow-author"] as const;
 const metadataFile = ".studioflow-skill.json";
-const previousSkillSource = process.env.STUDIOFLOW_SKILLS_SOURCE;
 const tempDirs: string[] = [];
 
 async function makeTempDir(prefix: string) {
@@ -21,12 +20,6 @@ async function writeJson(filePath: string, payload: unknown) {
 
 describe.sequential("install skills version-aware sync", () => {
   afterEach(async () => {
-    if (previousSkillSource === undefined) {
-      delete process.env.STUDIOFLOW_SKILLS_SOURCE;
-    } else {
-      process.env.STUDIOFLOW_SKILLS_SOURCE = previousSkillSource;
-    }
-
     while (tempDirs.length > 0) {
       const dir = tempDirs.pop();
       if (dir) {
@@ -87,10 +80,10 @@ describe.sequential("install skills version-aware sync", () => {
       installedAt: "2026-02-13T00:00:00.000Z"
     });
 
-    process.env.STUDIOFLOW_SKILLS_SOURCE = sourceDir;
-
     const result = await installBundledSkills({
-      targetDir
+      targetDir,
+      sourceDir,
+      allowExternalSource: true
     });
 
     expect(result.targets).toHaveLength(1);
@@ -114,5 +107,23 @@ describe.sequential("install skills version-aware sync", () => {
     expect(refreshedMetadata.packageName).toBe("studioflow");
     expect(refreshedMetadata.cliVersion).toBe("9.9.9");
     expect(refreshedMetadata.skillHash).toBe("investigate-hash");
+  });
+
+  it("requires explicit opt-in for external skill sources", async () => {
+    const sourceDir = await makeTempDir("studioflow-skill-source-");
+    const targetDir = await makeTempDir("studioflow-skill-target-");
+
+    for (const skillName of skillNames) {
+      const skillSourceDir = path.join(sourceDir, skillName);
+      await fs.mkdir(skillSourceDir, { recursive: true });
+      await fs.writeFile(path.join(skillSourceDir, "SKILL.md"), `# ${skillName} source`, "utf8");
+    }
+
+    await expect(
+      installBundledSkills({
+        targetDir,
+        sourceDir
+      })
+    ).rejects.toThrow("External skill source requires --allow-external-source true.");
   });
 });

@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import fs from "node:fs/promises";
+import path from "node:path";
 import kleur from "kleur";
 import type { FlowDefinition, RecorderBackend } from "@studioflow/contracts";
 import { ensureChromiumInstalled } from "@studioflow/adapters-playwright";
@@ -19,6 +21,7 @@ interface ParsedStartCommand {
 
 export interface RunCommandOptions {
   allowExport?: boolean;
+  allowUnsafeStartCommand?: boolean;
 }
 
 const explicitExportIntentMatchers = [
@@ -102,6 +105,100 @@ export function parseStartCommand(raw: string): ParsedStartCommand {
   return { command, args };
 }
 
+interface StartCommandSafetyResult {
+  safe: boolean;
+  reason?: string;
+  packageManager?: "pnpm" | "npm" | "yarn";
+  scriptName?: string;
+}
+
+function scriptNameToken(raw: string | undefined) {
+  if (!raw) return undefined;
+  if (!/^[A-Za-z0-9:_-]+$/.test(raw)) return undefined;
+  return raw;
+}
+
+function parsePackageManagerScriptInvocation(parsed: ParsedStartCommand): {
+  packageManager: "pnpm" | "npm" | "yarn";
+  scriptName: string;
+} | null {
+  const command = parsed.command.toLowerCase();
+  const [arg0, arg1] = parsed.args;
+
+  if (command === "npm") {
+    if (arg0 !== "run") return null;
+    const scriptName = scriptNameToken(arg1);
+    if (!scriptName) return null;
+    return { packageManager: "npm", scriptName };
+  }
+
+  if (command === "pnpm") {
+    if (arg0 === "run") {
+      const scriptName = scriptNameToken(arg1);
+      if (!scriptName) return null;
+      return { packageManager: "pnpm", scriptName };
+    }
+    const scriptName = scriptNameToken(arg0);
+    if (!scriptName) return null;
+    return { packageManager: "pnpm", scriptName };
+  }
+
+  if (command === "yarn") {
+    if (arg0 === "run") {
+      const scriptName = scriptNameToken(arg1);
+      if (!scriptName) return null;
+      return { packageManager: "yarn", scriptName };
+    }
+    const scriptName = scriptNameToken(arg0);
+    if (!scriptName) return null;
+    return { packageManager: "yarn", scriptName };
+  }
+
+  return null;
+}
+
+async function readWorkspaceScripts(): Promise<Record<string, unknown>> {
+  try {
+    const packageJsonPath = path.join(workspaceRoot(), "package.json");
+    const raw = await fs.readFile(packageJsonPath, "utf8");
+    const parsed = JSON.parse(raw) as { scripts?: Record<string, unknown> };
+    if (!parsed.scripts || typeof parsed.scripts !== "object") {
+      return {};
+    }
+    return parsed.scripts;
+  } catch {
+    return {};
+  }
+}
+
+export async function assessStartCommandSafety(raw: string): Promise<StartCommandSafetyResult> {
+  const parsed = parseStartCommand(raw);
+  const invocation = parsePackageManagerScriptInvocation(parsed);
+  if (!invocation) {
+    return {
+      safe: false,
+      reason:
+        'startCommand must use package-manager script form (e.g. "pnpm run dev:sample", "npm run dev", or "yarn run dev").'
+    };
+  }
+
+  const scripts = await readWorkspaceScripts();
+  if (typeof scripts[invocation.scriptName] !== "string") {
+    return {
+      safe: false,
+      packageManager: invocation.packageManager,
+      scriptName: invocation.scriptName,
+      reason: `script "${invocation.scriptName}" was not found in workspace package.json scripts.`
+    };
+  }
+
+  return {
+    safe: true,
+    packageManager: invocation.packageManager,
+    scriptName: invocation.scriptName
+  };
+}
+
 function flowRequestsExport(flows: FlowDefinition[]) {
   return flows.some((flow) => flow.steps.some((step) => step.action === "recorder_export"));
 }
@@ -130,6 +227,17 @@ function resolveExportPermission(intentLabel: string, opts: RunCommandOptions = 
     return envOverride;
   }
   return intentAllowsExport(intentLabel);
+}
+
+function resolveUnsafeStartCommandPermission(opts: RunCommandOptions = {}) {
+  if (opts.allowUnsafeStartCommand !== undefined) {
+    return opts.allowUnsafeStartCommand;
+  }
+  const envOverride = parseBooleanFromEnv("STUDIOFLOW_ALLOW_UNSAFE_START_COMMAND");
+  if (envOverride !== undefined) {
+    return envOverride;
+  }
+  return false;
 }
 
 async function waitForHealth(healthUrl: string, timeoutMs = 45_000) {
@@ -181,7 +289,8 @@ function formatStartupOutput(lines: string[]) {
 async function startAppLifecycle(
   baseUrl: string,
   startCommand: string | undefined,
-  healthPath: string
+  healthPath: string,
+  opts: RunCommandOptions = {}
 ): Promise<() => Promise<void>> {
   const healthUrl = new URL(healthPath, baseUrl).toString();
 
@@ -196,6 +305,16 @@ async function startAppLifecycle(
     throw new Error(
       `App is not healthy at ${healthUrl} and no start command is configured. Run \`studioflow bootstrap\` or pass --start-command.`
     );
+  }
+
+  const allowUnsafeStartCommand = resolveUnsafeStartCommandPermission(opts);
+  if (!allowUnsafeStartCommand) {
+    const safety = await assessStartCommandSafety(startCommand);
+    if (!safety.safe) {
+      throw new Error(
+        `Unsafe start command "${startCommand}" blocked: ${safety.reason} Pass --allow-unsafe-start-command true (or STUDIOFLOW_ALLOW_UNSAFE_START_COMMAND=true) to override.`
+      );
+    }
   }
 
   const parsedStartCommand = parseStartCommand(startCommand);
@@ -326,7 +445,7 @@ async function runWithFlows(
       headless: runtime.values.headless,
       recorder: runtime.values.recorder,
       startApp: async () =>
-        startAppLifecycle(runtime.values.baseUrl, runtime.values.startCommand, runtime.values.healthPath)
+        startAppLifecycle(runtime.values.baseUrl, runtime.values.startCommand, runtime.values.healthPath, opts)
     });
 
     console.log(kleur.green("Run completed successfully."));

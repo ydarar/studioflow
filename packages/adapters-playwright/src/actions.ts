@@ -154,6 +154,7 @@ export interface RuntimePacingDefaults {
   realisticTyping: boolean;
   typingDelayMs: number;
   clickPulseMs: number;
+  fullPageScreenshots: boolean;
   scrollAnimationMs: number;
   scrollSettleMs: number;
   stepPreDelayMs: number;
@@ -172,6 +173,7 @@ export function resolveRuntimePacingDefaults(env: NodeJS.ProcessEnv = process.en
     realisticTyping: boolEnv("STUDIOFLOW_REALISTIC_TYPING", true, env),
     typingDelayMs: Math.max(0, intEnv("STUDIOFLOW_TYPING_DELAY_MS", 55, env)),
     clickPulseMs: Math.max(0, intEnv("STUDIOFLOW_CLICK_PULSE_MS", 220, env)),
+    fullPageScreenshots: boolEnv("STUDIOFLOW_SCREENSHOT_FULL_PAGE", false, env),
     scrollAnimationMs: Math.max(0, intEnv("STUDIOFLOW_SCROLL_ANIMATION_MS", 340, env)),
     scrollSettleMs: Math.max(0, intEnv("STUDIOFLOW_SCROLL_SETTLE_MS", 180, env)),
     stepPreDelayMs: Math.max(0, intEnv("STUDIOFLOW_STEP_PRE_DELAY_MS", 90, env)),
@@ -637,6 +639,28 @@ function sanitizeScreenshotName(raw: string) {
   return safe || "screenshot";
 }
 
+function normalizePathname(pathname: string) {
+  if (!pathname) return "/";
+  const normalized = pathname.replace(/\/+$/g, "");
+  return normalized.length > 0 ? normalized : "/";
+}
+
+function isSameNavigationTarget(currentUrl: string, nextUrl: string) {
+  if (!currentUrl) return false;
+  try {
+    const current = new URL(currentUrl);
+    const next = new URL(nextUrl);
+    return (
+      current.origin === next.origin &&
+      normalizePathname(current.pathname) === normalizePathname(next.pathname) &&
+      current.search === next.search &&
+      current.hash === next.hash
+    );
+  } catch {
+    return currentUrl === nextUrl;
+  }
+}
+
 async function ensureCursorOverlay(page: Page, runtime: RuntimePacingDefaults) {
   if (!runtime.renderCursorOverlay) return;
   const cursorExists = await page.evaluate(cursorExistsScript);
@@ -754,7 +778,10 @@ export async function executeStep(
   if (step.action === "goto") {
     const target = step.value ?? "/";
     const isAbsolute = /^https?:\/\//.test(target);
-    await page.goto(isAbsolute ? target : new URL(target, baseUrl).toString(), { timeout });
+    const destinationUrl = isAbsolute ? target : new URL(target, baseUrl).toString();
+    if (!isSameNavigationTarget(page.url(), destinationUrl)) {
+      await page.goto(destinationUrl, { timeout });
+    }
     await applyPostStepPacing(step, context, runtime);
     return;
   }
@@ -820,7 +847,7 @@ export async function executeStep(
   if (step.action === "screenshot") {
     const name = sanitizeScreenshotName(step.value ?? step.id);
     const screenshotPath = path.join(runDir, "screenshots", `${name}.png`);
-    await page.screenshot({ path: screenshotPath, fullPage: true });
+    await page.screenshot({ path: screenshotPath, fullPage: runtime.fullPageScreenshots });
     await applyPostStepPacing(step, context, runtime);
     return;
   }

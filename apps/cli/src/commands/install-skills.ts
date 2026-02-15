@@ -22,6 +22,8 @@ export interface InstallSkillsOptions {
   agent?: SkillsAgentSelection;
   codexTargetDir?: string;
   claudeTargetDir?: string;
+  sourceDir?: string;
+  allowExternalSource?: boolean;
   quiet?: boolean;
 }
 
@@ -215,32 +217,38 @@ async function writeInstalledSkillMetadata(
   await fs.writeFile(path.join(skillDir, skillMetadataFile), `${JSON.stringify(metadata, null, 2)}\n`);
 }
 
-async function resolveBundledSkillsDir(): Promise<string> {
-  // Prefer packaged bundled assets, but keep workspace and legacy fallbacks for local development.
-  const candidates = [
-    process.env.STUDIOFLOW_SKILLS_SOURCE,
-    path.resolve(__dirname, "../bundled/skills"),
-    path.resolve(__dirname, "../../bundled/skills"),
-    path.resolve(__dirname, "../skills"),
-    path.resolve(__dirname, "../../skills"),
-    path.resolve(__dirname, "../../../../skills"),
-    path.resolve(process.cwd(), "skills")
-  ].filter((value): value is string => Boolean(value && value.trim()));
+async function hasBundledSkills(candidate: string) {
+  const hasAllSkills = await Promise.all(
+    bundledSkillNames.map(async (name) => {
+      const dir = path.join(candidate, name);
+      return pathExists(path.join(dir, "SKILL.md"));
+    })
+  );
+  return hasAllSkills.every(Boolean);
+}
+
+async function resolveBundledSkillsDir(opts: { sourceDir?: string; allowExternalSource?: boolean } = {}): Promise<string> {
+  if (opts.sourceDir) {
+    if (!opts.allowExternalSource) {
+      throw new Error("External skill source requires --allow-external-source true.");
+    }
+    const resolved = path.resolve(opts.sourceDir);
+    if (await hasBundledSkills(resolved)) {
+      return resolved;
+    }
+    throw new Error(`External skill source is missing required bundled skills: ${resolved}`);
+  }
+
+  const candidates = [path.resolve(__dirname, "../bundled/skills"), path.resolve(__dirname, "../../bundled/skills")];
 
   for (const candidate of candidates) {
-    const hasAllSkills = await Promise.all(
-      bundledSkillNames.map(async (name) => {
-        const dir = path.join(candidate, name);
-        return pathExists(path.join(dir, "SKILL.md"));
-      })
-    );
-    if (hasAllSkills.every(Boolean)) {
+    if (await hasBundledSkills(candidate)) {
       return candidate;
     }
   }
 
   throw new Error(
-    `Could not locate bundled skills. Checked: ${candidates.join(", ")}. Set STUDIOFLOW_SKILLS_SOURCE if needed.`
+    `Could not locate packaged bundled skills. Checked: ${candidates.join(", ")}.`
   );
 }
 
@@ -301,7 +309,10 @@ async function syncSkillsToTarget(
 }
 
 export async function installBundledSkills(opts: InstallSkillsOptions = {}): Promise<InstallSkillsResult> {
-  const sourceDir = await resolveBundledSkillsDir();
+  const sourceDir = await resolveBundledSkillsDir({
+    sourceDir: opts.sourceDir,
+    allowExternalSource: opts.allowExternalSource
+  });
   const manifest = await resolveBundledSkillsManifest(sourceDir);
   const force = opts.force ?? false;
   const targets: Array<{ targetId: SkillsAgent | "custom"; targetDir: string }> = [];

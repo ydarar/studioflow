@@ -89,11 +89,12 @@ Execution lifecycle:
    - Headed mode defaults to a maximized window (`--start-maximized`, `viewport: null`) for capture framing.
    - Headless mode and explicit fullscreen disable use fixed `1440x960` viewport.
 3. App lifecycle starts via injected `startApp` callback.
-4. Recorder starts; browser tab is brought back to front.
-5. Each flow step executes with retry wrapper.
-6. Recorder stop sequence runs; export runs only when at least one flow step is `recorder_export`.
-7. `plan.json` is written.
-8. `run.json` is finalized.
+4. Engine preloads the initial route (first `goto` target when present, otherwise `/`) before recording starts, to avoid blank-tab capture startup.
+5. Recorder starts; browser tab is brought back to front.
+6. Each flow step executes with retry wrapper.
+7. Recorder stop sequence runs; export runs only when at least one flow step is `recorder_export`.
+8. `plan.json` is written.
+9. `run.json` is finalized.
 
 Failure handling:
 - Emits `run.failed` event.
@@ -121,12 +122,12 @@ Source: `packages/adapters-playwright/src/actions.ts`
   - Runtime multiplier and deterministic jitter applied unless strict pacing is enabled.
 
 - Action execution:
-  - `goto`: absolute URL or baseURL-relative route.
+  - `goto`: absolute URL or baseURL-relative route (skips navigation when already on the same URL).
   - `click`: first locator click.
   - `type`: realistic keyboard typing or direct fill.
   - `wait_for`: selector or text wait.
   - Assertions via helper functions.
-  - Screenshot writes full-page PNG to run folder.
+  - Screenshot writes viewport PNG by default (`STUDIOFLOW_SCREENSHOT_FULL_PAGE=true` for full-page capture).
 
 - Post-step pacing:
   - `postDelayMs` then `dwellMs`.
