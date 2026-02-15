@@ -65,6 +65,16 @@ describe.sequential("cli command contracts", () => {
     expect(pkg.scripts?.doctor).toBe("pnpm --filter studioflow run doctor");
   });
 
+  it("provides dedicated root config scripts for show/check", async () => {
+    const pkgPath = path.resolve(rootDir, "package.json");
+    const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8")) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(pkg.scripts?.["config:show"]).toBe("pnpm --filter studioflow run config -- show");
+    expect(pkg.scripts?.["config:check"]).toBe("pnpm --filter studioflow run config -- check");
+  });
+
   it("returns a clear error for unknown commands", async () => {
     const result = await runCli(["definitely-not-a-command"]);
 
@@ -91,6 +101,13 @@ describe.sequential("cli command contracts", () => {
 
     expect(result.code).toBe(1);
     expect(result.stderr).toContain("StudioFlow error: Usage: studioflow run --flow <path/to/flow.json|yaml>");
+  });
+
+  it("returns a clear error when required flag values are missing", async () => {
+    const result = await runCli(["run", "--flow", "--intent", "onboarding"]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("StudioFlow error: Flag --flow requires a value.");
   });
 
   it("does not expose plan command", async () => {

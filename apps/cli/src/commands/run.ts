@@ -147,7 +147,35 @@ async function waitForHealth(healthUrl: string, timeoutMs = 45_000) {
     await new Promise((resolve) => setTimeout(resolve, 700));
   }
 
-  throw new Error(`Timed out waiting for sample app health (${healthUrl}): ${String(lastError)}`);
+  throw new Error(`Timed out waiting for app health (${healthUrl}): ${String(lastError)}`);
+}
+
+const startupOutputLimit = 4000;
+
+function appendStartupOutput(
+  target: string[],
+  chunk: Buffer | string,
+  stream: "stdout" | "stderr"
+) {
+  const raw = typeof chunk === "string" ? chunk : chunk.toString("utf8");
+  const withPrefix = raw
+    .split(/\r?\n/)
+    .filter((line) => line.length > 0)
+    .map((line) => `[${stream}] ${line}`)
+    .join("\n");
+  if (!withPrefix) return;
+  target.push(withPrefix);
+}
+
+function formatStartupOutput(lines: string[]) {
+  if (lines.length === 0) {
+    return "No output captured from start command.";
+  }
+  const joined = lines.join("\n");
+  if (joined.length <= startupOutputLimit) {
+    return joined;
+  }
+  return `...${joined.slice(joined.length - startupOutputLimit)}`;
 }
 
 async function startAppLifecycle(
@@ -171,22 +199,45 @@ async function startAppLifecycle(
   }
 
   const parsedStartCommand = parseStartCommand(startCommand);
+  const startupOutput: string[] = [];
   const child = spawn(parsedStartCommand.command, parsedStartCommand.args, {
     shell: false,
     cwd: workspaceRoot(),
-    stdio: "ignore",
+    stdio: ["ignore", "pipe", "pipe"],
     detached: false
+  });
+  child.stdout?.on("data", (chunk) => appendStartupOutput(startupOutput, chunk, "stdout"));
+  child.stderr?.on("data", (chunk) => appendStartupOutput(startupOutput, chunk, "stderr"));
+
+  const startupFailure = new Promise<never>((_, reject) => {
+    child.once("error", (error) => {
+      reject(
+        new Error(
+          `Failed to launch start command "${startCommand}": ${error.message}.`
+        )
+      );
+    });
+    child.once("exit", (code, signal) => {
+      reject(
+        new Error(
+          `Start command "${startCommand}" exited before app became healthy (code ${code ?? "unknown"}${signal ? `, signal ${signal}` : ""}). ${formatStartupOutput(startupOutput)}`
+        )
+      );
+    });
   });
 
   try {
-    await waitForHealth(healthUrl, 60_000);
+    await Promise.race([waitForHealth(healthUrl, 60_000), startupFailure]);
   } catch (error) {
-    child.kill("SIGTERM");
-    throw error;
+    if (child.exitCode === null && !child.killed) {
+      child.kill("SIGTERM");
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`App startup failed for "${startCommand}": ${message}`);
   }
 
   return async () => {
-    if (!child.killed) {
+    if (child.exitCode === null && !child.killed) {
       child.kill("SIGTERM");
     }
   };

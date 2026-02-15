@@ -29,12 +29,6 @@ async function cliVersion() {
   return cachedVersion;
 }
 
-function readFlag(args: string[], flag: string) {
-  const index = args.indexOf(flag);
-  if (index === -1) return undefined;
-  return args[index + 1];
-}
-
 function hasFlag(args: string[], flag: string) {
   return args.includes(flag);
 }
@@ -103,14 +97,14 @@ async function main() {
     }
 
     if (command === "run" || command === "demo") {
-      const flowPath = readFlag(normalizedArgs, "--flow");
+      const flowPath = readFlagValue(normalizedArgs, "--flow");
       if (!flowPath) {
         throw new Error(
           'Usage: studioflow run --flow <path/to/flow.json|yaml> [--intent "<label>"] [--allow-export <true|false>] [--base-url <url>] [--start-command "<command>"] [--health-path <path>] [--headless <true|false>] [--recorder <quicktime|screenstudio>] [--bootstrap-report <path>] [--runs-dir <path>]'
         );
       }
 
-      const sourceIntent = readFlag(normalizedArgs, "--intent") ?? "artifact flow";
+      const sourceIntent = readFlagValue(normalizedArgs, "--intent") ?? "artifact flow";
       const runtimeOverrides = parseRuntimeConfigOverrides(normalizedArgs);
       const runOptions = parseRunCommandOptions(normalizedArgs);
       await runFlowFileCommand(flowPath, sourceIntent, runtimeOverrides, runOptions);
@@ -139,25 +133,25 @@ async function main() {
     }
 
     if (command === "discover") {
-      const outDir = readFlag(normalizedArgs, "--out") ?? "artifacts";
+      const outDir = readFlagValue(normalizedArgs, "--out") ?? "artifacts";
       await discoverCommand(outDir);
       return;
     }
 
     if (command === "bootstrap") {
-      const outPath = readFlag(normalizedArgs, "--out") ?? "artifacts/bootstrap.json";
+      const outPath = readFlagValue(normalizedArgs, "--out") ?? "artifacts/bootstrap.json";
       await bootstrapCommand(outPath);
       return;
     }
 
     if (command === "screenstudio-prep") {
-      const appName = readFlag(normalizedArgs, "--app-name");
+      const appName = readFlagValue(normalizedArgs, "--app-name");
       await screenstudioPrepCommand(appName);
       return;
     }
 
     if (command === "quicktime-prep") {
-      const appName = readFlag(normalizedArgs, "--app-name");
+      const appName = readFlagValue(normalizedArgs, "--app-name");
       await quicktimePrepCommand(appName);
       return;
     }
@@ -166,10 +160,10 @@ async function main() {
       await setupCommand({
         skipSkills: hasFlag(normalizedArgs, "--skip-skills"),
         forceSkills: hasFlag(normalizedArgs, "--force-skills"),
-        skillsTargetDir: readFlag(normalizedArgs, "--skills-target"),
-        skillsAgent: parseSkillsAgent(readFlag(normalizedArgs, "--skills-agent"), "--skills-agent"),
-        codexSkillsTargetDir: readFlag(normalizedArgs, "--codex-skills-target"),
-        claudeSkillsTargetDir: readFlag(normalizedArgs, "--claude-skills-target")
+        skillsTargetDir: readFlagValue(normalizedArgs, "--skills-target"),
+        skillsAgent: parseSkillsAgent(readFlagValue(normalizedArgs, "--skills-agent"), "--skills-agent"),
+        codexSkillsTargetDir: readFlagValue(normalizedArgs, "--codex-skills-target"),
+        claudeSkillsTargetDir: readFlagValue(normalizedArgs, "--claude-skills-target")
       });
       return;
     }
@@ -177,16 +171,16 @@ async function main() {
     if (command === "install-skills") {
       await installSkillsCommand({
         force: hasFlag(normalizedArgs, "--force"),
-        targetDir: readFlag(normalizedArgs, "--target"),
-        agent: parseSkillsAgent(readFlag(normalizedArgs, "--agent"), "--agent"),
-        codexTargetDir: readFlag(normalizedArgs, "--codex-target"),
-        claudeTargetDir: readFlag(normalizedArgs, "--claude-target")
+        targetDir: readFlagValue(normalizedArgs, "--target"),
+        agent: parseSkillsAgent(readFlagValue(normalizedArgs, "--agent"), "--agent"),
+        codexTargetDir: readFlagValue(normalizedArgs, "--codex-target"),
+        claudeTargetDir: readFlagValue(normalizedArgs, "--claude-target")
       });
       return;
     }
 
     if (command === "validate") {
-      const flowPath = readFlag(normalizedArgs, "--flow") ?? normalizedArgs[0];
+      const flowPath = readFlagValue(normalizedArgs, "--flow") ?? normalizedArgs[0];
       await validateCommand(flowPath);
       return;
     }

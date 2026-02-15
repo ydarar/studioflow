@@ -9,6 +9,8 @@
     "dev:demo-lab": "pnpm --filter @studioflow/demo-lab run dev",
     "demo": "pnpm --filter studioflow run demo --",
     "config": "pnpm --filter studioflow run config --",
+    "config:show": "pnpm --filter studioflow run config -- show",
+    "config:check": "pnpm --filter studioflow run config -- check",
     "setup": "pnpm --filter studioflow run setup --",
     "install-skills": "pnpm --filter studioflow run install-skills --",
     "discover": "pnpm --filter studioflow run discover --",

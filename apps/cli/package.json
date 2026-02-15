@@ -28,6 +28,8 @@
   "scripts": {
     "prepare:assets": "node scripts/sync-skills.mjs",
     "build": "node scripts/build.mjs",
+    "verify:bundled": "node scripts/verify-bundled-assets.mjs",
+    "verify:release-tag": "node scripts/verify-release-tag.mjs",
     "prepack": "node scripts/sync-skills.mjs && node scripts/build.mjs",
     "demo": "tsx src/index.ts run",
     "config": "tsx src/index.ts config",

@@ -29,7 +29,7 @@ pnpm validate -- --flow artifacts/flow.json
 
 ```bash
 pnpm run doctor
-pnpm config check
+pnpm run config:check
 ```
 
 3. Optional targeted recorder diagnostics (only when run preflight fails).

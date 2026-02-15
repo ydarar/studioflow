@@ -12,7 +12,7 @@ const bundledRoot = path.join(packageRoot, "bundled");
 const targetSkillsRoot = path.join(bundledRoot, "skills");
 const sourceFlowsRoot = path.resolve(packageRoot, "../../packages/flow-registry/flows");
 const targetFlowsRoot = path.join(bundledRoot, "flows");
-const skillNames = ["studioflow-cli", "studioflow-investigate"];
+const skillNames = ["studioflow-cli", "studioflow-investigate", "studioflow-author"];
 const flowNames = ["billing.yaml", "onboarding.yaml", "onboarding_billing.yaml"];
 
 async function listFilesRecursively(rootDir) {

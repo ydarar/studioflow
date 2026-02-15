@@ -22,7 +22,7 @@ For release validation, use `docs/testing-manual-smoke.md`.
 ```bash
 pnpm run setup
 pnpm run doctor
-pnpm config check
+pnpm run config:check
 ```
 
 Pass criteria:
@@ -81,5 +81,5 @@ Pass criteria:
 - Permission failures: rerun `pnpm run doctor` and approve macOS prompts.
 - QuickTime preflight failures: run `pnpm quicktime-prep` to inspect File menu actions directly.
 - Screen Studio preflight failures: run `pnpm screenstudio-prep` to inspect Record menu actions directly.
-- Health timeout: run `pnpm config show` and confirm `baseUrl`, `startCommand`, and `healthPath`.
+- Health timeout: run `pnpm run config:show` and confirm `baseUrl`, `startCommand`, and `healthPath`.
 - Flow validation failures: rerun `pnpm validate -- --flow <path>` and fix missing required fields.
