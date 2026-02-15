@@ -240,6 +240,52 @@ describe.sequential("playwright action execution", () => {
     expect(Number(cursorDetails?.opacity ?? "0")).toBeGreaterThan(0.9);
   });
 
+  it("keeps hover effects aligned with the visible cursor position", async () => {
+    await page.setContent(`
+      <main>
+        <button data-testid="hover-sync-button" style="margin-left: 560px; margin-top: 120px;">Hover</button>
+      </main>
+      <script>
+        window.__hoverSample = null;
+        const button = document.querySelector('[data-testid="hover-sync-button"]');
+        button.addEventListener('mouseenter', () => {
+          const cursor = document.getElementById('studioflow-cursor');
+          const cursorRect = cursor ? cursor.getBoundingClientRect() : null;
+          const targetRect = button.getBoundingClientRect();
+          window.__hoverSample = {
+            cursorX: cursorRect ? cursorRect.left + cursorRect.width / 2 : null,
+            cursorY: cursorRect ? cursorRect.top + cursorRect.height / 2 : null,
+            targetX: targetRect.left + targetRect.width / 2,
+            targetY: targetRect.top + targetRect.height / 2
+          };
+        });
+      </script>
+    `);
+
+    await executeStep(
+      page,
+      {
+        id: "hover-sync-click",
+        action: "click",
+        target: '[data-testid="hover-sync-button"]',
+        preDelayMs: 0,
+        postDelayMs: 0,
+        dwellMs: 0,
+        highlightMs: 0,
+        mouseMoveMs: 260
+      },
+      runDir,
+      "http://localhost:4173"
+    );
+
+    const sample = await page.evaluate(() => (window as any).__hoverSample);
+    expect(sample).toBeTruthy();
+    expect(sample?.cursorX).not.toBeNull();
+    expect(sample?.cursorY).not.toBeNull();
+    expect(Math.abs((sample?.cursorX ?? 0) - (sample?.targetX ?? 0))).toBeLessThan(85);
+    expect(Math.abs((sample?.cursorY ?? 0) - (sample?.targetY ?? 0))).toBeLessThan(85);
+  });
+
   it("supports the generic cursor theme override", async () => {
     process.env.STUDIOFLOW_CURSOR_THEME = "generic";
     await page.setContent('<button data-testid="theme-button">Theme</button>');

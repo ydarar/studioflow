@@ -1,14 +1,16 @@
 # StudioFlow
 
-StudioFlow turns a plain-language demo request into a deterministic recorded run.
+StudioFlow turns a plain-language demo request into a deterministic recorded product run.
 
 This package includes:
 - a CLI runtime (`studioflow`) for deterministic artifact execution
 - bundled agent skills for Codex and Claude (`studioflow-investigate`, `studioflow-author`, `studioflow-cli`)
 
+StudioFlow supports both QuickTime Player and Screen Studio recording backends.
+
 ## Requirements
 
-- macOS (QuickTime/Screen Studio automation)
+- macOS (recorder automation is macOS-only)
 - Node.js 22+
 - QuickTime Player (built into macOS) or Screen Studio
 
@@ -18,69 +20,123 @@ This package includes:
 npm install -g studioflow
 ```
 
-## Setup Runtime + Skills
+## Quickstart (2 Minutes)
 
-`setup` installs Playwright Chromium, installs bundled skills for Codex and Claude, and checks permissions.
+1. Setup runtime dependencies and bundled skills:
 
 ```bash
 studioflow setup
+studioflow doctor
+studioflow config check
 ```
 
-## Default Workflow (Agent-First)
-
-You should not need to manually invoke multiple skills or manually run CLI commands for a normal demo request.
-Open Codex or Claude in your project and describe the demo you want.
-
-1. Start your agent from the project root.
-
-Codex:
+2. Open Codex or Claude from your project root:
 
 ```bash
 cd /path/to/your/project
 codex
-```
-
-Claude Code:
-
-```bash
-cd /path/to/your/project
+# or
 claude
 ```
 
-If your launcher command differs, start your usual Codex or Claude session in this repo root.
-
-2. Ask for the demo in plain language.
-
-Example:
+3. Ask in plain language:
 
 ```text
 Record a demo for onboarding and billing.
 ```
 
-3. StudioFlow skills + CLI handle the rest:
-- clarify intent + route (`studioflow-investigate`)
-- create/repair deterministic artifacts when needed (`studioflow-author`)
-- execute deterministic recording (`studioflow-cli`)
+or
 
-`run`/`demo` automatically performs recorder preflight checks. QuickTime is the default backend; use `--recorder screenstudio` to opt into Screen Studio.
-Headed runs auto-open a maximized browser window for cleaner recording composition.
-Runs do not auto-export by default; include `recorder_export` in flow steps only when export is explicitly needed.
-Runs now also block `recorder_export` unless intent text explicitly asks for export, or `--allow-export true` is provided.
+```text
+Record a demo for onboarding and billing using Screen Studio.
+```
 
-## Advanced Manual Mode (Optional)
+4. Expected successful run output includes:
 
-If you want to run the runtime yourself:
+```text
+Run completed successfully.
+Run ID: <timestamp-id>
+Artifacts: <path-to-run-dir>
+```
+
+## Recorder Backends
+
+- `quicktime` (default): no extra app install required.
+- `screenstudio`: just specify Screen Studio in your agent request.
+
+Manual CLI mode still supports `--recorder screenstudio` when you want direct runtime control.
+
+## What `setup` Changes
+
+`studioflow setup`:
+- installs Playwright Chromium runtime
+- installs StudioFlow skills into:
+  - Codex: `$CODEX_HOME/skills` or `~/.codex/skills`
+  - Claude: `$CLAUDE_HOME/skills` or `~/.claude/skills`
+- runs permission diagnostics
+- writes setup state under `~/.studioflow` (or `$STUDIOFLOW_DATA_DIR`)
+
+## Command Cheat Sheet
+
+| Task | Command |
+| --- | --- |
+| Setup runtime + skills | `studioflow setup` |
+| Check permissions | `studioflow doctor` |
+| Show effective config | `studioflow config show` |
+| Validate config health | `studioflow config check` |
+| Validate flow artifact | `studioflow validate --flow artifacts/flow.json` |
+| Run deterministic demo | `studioflow demo --flow artifacts/flow.json --intent "your demo intent"` |
+| List built-in flows | `studioflow list-flows` |
+| QuickTime diagnostics | `studioflow quicktime-prep` |
+| Screen Studio diagnostics | `studioflow screenstudio-prep` |
+
+## Minimal Manual Flow (Optional)
+
+If you want to run the CLI directly without agent authoring first, start with a minimal artifact:
+
+```json
+{
+  "id": "landing_capture",
+  "description": "Capture the landing page",
+  "tags": ["smoke"],
+  "steps": [
+    { "id": "open-home", "action": "goto", "value": "/" },
+    { "id": "capture-home", "action": "screenshot", "value": "home" }
+  ]
+}
+```
+
+Then run:
 
 ```bash
 studioflow validate --flow artifacts/flow.json
-studioflow demo --flow artifacts/flow.json --intent "onboarding and billing demo"
+studioflow demo --flow artifacts/flow.json --intent "landing page smoke"
 ```
 
-## Documentation
+## Quick Troubleshooting
 
-- Day 0 runbook: https://github.com/ydarar/studioflow/blob/main/docs/day0-runbook.md
-- CLI reference: https://github.com/ydarar/studioflow/blob/main/docs/cli-reference.md
-- Configuration: https://github.com/ydarar/studioflow/blob/main/docs/configuration.md
-- Smoke checklist: https://github.com/ydarar/studioflow/blob/main/docs/testing-manual-smoke.md
-- Open intent tests: https://github.com/ydarar/studioflow/blob/main/docs/studioflow-open-intent-tests.md
-- Full docs map: https://github.com/ydarar/studioflow/blob/main/docs/README.md
+- Permission failures:
+  - `studioflow doctor` and approve macOS prompts.
+- QuickTime preflight failures:
+  - `studioflow quicktime-prep`
+- Screen Studio preflight failures:
+  - `studioflow screenstudio-prep`
+- App health timeout:
+  - `studioflow config show` and verify `baseUrl`, `startCommand`, `healthPath`.
+- Flow validation failures:
+  - `studioflow validate --flow <path>`
+
+## Uninstall / Cleanup
+
+```bash
+npm uninstall -g studioflow
+```
+
+Optional local cleanup:
+- remove `~/.studioflow` (or `$STUDIOFLOW_DATA_DIR`)
+- remove installed skill folders under `~/.codex/skills` and `~/.claude/skills` if you no longer want them
+
+## Contact
+
+- X: https://x.com/Ydarar_dev (@Ydarar_dev)
+- GitHub: https://github.com/ydarar/studioflow/issues

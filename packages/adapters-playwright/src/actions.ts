@@ -699,12 +699,15 @@ async function getTargetCenter(page: Page, target: string): Promise<Point | null
 }
 
 async function moveCursor(page: Page, point: Point, durationMs: number, runtime: RuntimePacingDefaults) {
-  await page.mouse.move(point.x, point.y, { steps: Math.max(8, Math.floor(durationMs / 16)) });
   if (runtime.renderCursorOverlay) {
     await ensureCursorOverlay(page, runtime);
+    // Keep UI reactions synchronized with the visible cursor overlay by moving the real
+    // pointer only after the overlay finishes traveling to the destination.
     await page.evaluate(cursorMoveScript(point, durationMs));
+    await page.mouse.move(point.x, point.y);
     return;
   }
+  await page.mouse.move(point.x, point.y, { steps: Math.max(8, Math.floor(durationMs / 16)) });
   if (durationMs > 0) {
     await wait(durationMs);
   }
